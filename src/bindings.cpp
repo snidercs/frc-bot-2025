@@ -1,10 +1,10 @@
 #include <frc/XboxController.h>
 
-#include "scripting.hpp"
+#include "include/scripting.hpp"
 #include "sol/sol.hpp"
 
-#include "parameters.hpp"
-#include "robot.hpp"
+#include "include/parameters.hpp"
+#include "include/robot.hpp"
 
 namespace lua {
 

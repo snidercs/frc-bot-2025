@@ -1,0 +1,65 @@
+---Main bot program.  Runs when in teleop mode.
+
+local gamepad         = require('gamepad')
+local params          = require('params')
+local robot           = require('robot')
+
+-- Gear Change vars
+local low_gear        = false
+
+local function update_speed()
+    if gamepad.B() then
+        low_gear = true
+    elseif gamepad.X() then
+        low_gear = false
+    end
+end
+
+--------------------------------------------------------------------------------
+local function init()
+    -- local team = config.get('team_name')
+    -- print(team .. " ready to roll")
+end
+
+--------------------------------------------------------------------------------
+local function teleop_prepare()
+end
+
+local function teleop_run()
+    update_gamepad_state()
+    update_speed()
+
+    local xSpeed = gamepad.getAxis('left_x')
+    local ySpeed = gamepad.getAxis('left_y')
+    local rot = gamepad.getAxis('right_x')
+
+    if low_gear then
+        xSpeed = xSpeed * 0.5
+        ySpeed = ySpeed * 0.5
+        rot = rot * 0.5
+    end
+
+    robot.drive(xSpeed, ySpeed, rot)
+end
+
+local function teleop_cleanup()
+end
+
+---A Timed robot descriptor.
+---
+---The c++ RobotMain will call these functions while running. Think of this file
+---as a "Plugin" to the system with a common interface defined in this table.
+---This allows us to change out robot implementations easily, or even on-the-fly.
+---@meta
+---@see config.engine Engine settings
+---@class EngineDescriptor
+---@field init function Robot initialization called once before anything else.
+---@field prepare function Called once before starting teleop mode.
+---@field run function Called repeatedly for a defined period.
+---@field cleanup function Called once before unloading this bot program.
+return {
+    init = init,
+    prepare = teleop_prepare,
+    run = teleop_run,
+    cleanup = teleop_cleanup
+}

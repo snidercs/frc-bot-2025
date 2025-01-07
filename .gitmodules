@@ -1,0 +1,3 @@
+[submodule "vendordeps/luajit"]
+	path = vendordeps/luajit
+	url = https://github.com/LuaJIT/LuaJIT.git

@@ -38,7 +38,7 @@ deploy {
 def deployArtifact = deploy.targets.roborio.artifacts.frcCpp
 
 // Set this to true to enable desktop support.
-def includeDesktopSupport = false
+def includeDesktopSupport = true
 
 // Set to true to run simulation in debug mode
 wpi.cpp.debugSimulation = false
@@ -58,11 +58,11 @@ model {
 
             sources.cpp {
                 source {
-                    srcDir 'src/main/cpp'
+                    srcDir 'src'
                     include '**/*.cpp', '**/*.cc'
                 }
                 exportedHeaders {
-                    srcDir 'src/main/include'
+                    srcDir 'src'
                 }
             }
 
@@ -85,7 +85,7 @@ model {
 
             sources.cpp {
                 source {
-                    srcDir 'src/test/cpp'
+                    srcDir 'test'
                     include '**/*.cpp'
                 }
             }
@@ -99,3 +99,68 @@ model {
         }
     }
 }
+
+//==============================================================================
+// returns a directory or file within the sdk dir.
+String sdkDir(String dir = "") {
+    String out = projectDir.toString()
+    out += "/vendordeps/sdk"
+    if (! dir.isEmpty())
+        out += "/" + dir
+    return out
+}
+
+// Guesses an sdk slug (linux64, roborio, msvc, darwin) for a given target name.
+String sdkSlugForTargetName (String name) {
+    String lname = name.toLowerCase();
+    
+    if (lname.contains ("linuxx86-64")) {
+        return "linux64"
+    } else if (lname.contains ("linuxathena")) {
+        return "roborio"
+    } else if (lname.contains ("windowsx86-64")) {
+        return "msvc"
+    } else if (lname.contains ("darwin") || lname.contains('osx')) {
+        return "macos"
+    }
+
+    return "unknown"
+}
+
+tasks.withType(CppCompile).configureEach {
+    String sdkSlug = sdkSlugForTargetName(name)
+    if (false) {
+        includes {
+            sdkDir (sdkSlug + "/include")
+            "vendordeps/luajit/src"
+        }
+    } else {
+        includes {
+            sdkDir (sdkSlug + "/include")
+            sdkDir (sdkSlug + "/include/luajit-2.1")
+        }
+    }
+}
+
+tasks.withType(LinkExecutable).configureEach {
+    String platform = targetPlatform.get().name
+    if (platform == 'linuxx86-64') {
+        linkerArgs.addAll '-L', sdkDir('linux64/lib'), '-lluajit-5.1'
+    } else if (platform == 'linuxathena') {
+        linkerArgs.addAll '-L', sdkDir('roborio/lib'), '-lluajit-5.1'
+    } else if (platform == 'windowsx86-64') {
+        linkerArgs.addAll  sdkDir('msvc/lib/lua51.lib')
+    } else if (platform.contains ("darwin") || platform.contains('osx')) {
+         linkerArgs.addAll '-L', sdkDir('macos/lib'), '-lluajit-5.1'
+    }
+}
+
+ task clangFormat {
+     doLast {
+         exec {
+             workingDir "${projectDir}"
+             executable 'python3'
+             args "${projectDir}/util/format.py"
+         }
+     }
+ }

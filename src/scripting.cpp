@@ -5,7 +5,7 @@
 
 #include <frc/Filesystem.h>
 
-#include "scripting.hpp"
+#include "include/scripting.hpp"
 #include "sol/state.hpp"
 extern "C" {
 #include "luajit.h"

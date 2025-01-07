@@ -2,7 +2,7 @@
 #include <cmath>
 #include <vector>
 
-#include "parameters.hpp"
+#include "include/parameters.hpp"
 
 /** Enable to log value changes in the axis controls. */
 #ifndef BOT_LOG_AXES

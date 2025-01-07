@@ -22,13 +22,13 @@
 
 #include "snider/padmode.hpp"
 
-#include "config.hpp"
-#include "engine.hpp"
-#include "normalisablerange.hpp"
-#include "parameters.hpp"
-#include "scripting.hpp"
+#include "include/config.hpp"
+#include "include/engine.hpp"
+#include "include/normalisablerange.hpp"
+#include "include/parameters.hpp"
+#include "include/scripting.hpp"
 
-#include "robot.hpp"
+#include "include/robot.hpp"
 #include "sol/table.hpp"
 
 #define SIM_CAMERA_DISABLED 1

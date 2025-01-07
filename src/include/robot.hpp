@@ -17,6 +17,7 @@
 #include <frc/controller/PIDController.h>
 #include <ctre/phoenix6/CANcoder.hpp>
 #include <ctre/phoenix6/TalonFX.hpp>
+
 #include "config.hpp"
 #include "normalisablerange.hpp"
 #include "types.hpp"
@@ -123,7 +124,7 @@ private:
     void postProcess();
     const MetersPerSecond calculateSpeed (double value) noexcept;
     const RadiansPerSecond calculateRotation (double value) noexcept;
-    void setSpeeds (const frc::SwerveDriveWheelSpeeds<4>& speeds);
+    // void setSpeeds (const frc::SwerveDriveWheelSpeeds<4>& speeds);
     void updateOdometry();
 
 #ifdef SWERVE_DRIVE_SIM_SUPPORTED

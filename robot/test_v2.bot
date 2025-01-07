@@ -1,0 +1,23 @@
+--------------------------------------------------------------------------------
+local function test_init()
+    print("test_init()")
+end
+
+--------------------------------------------------------------------------------
+local function test_prepare()
+    print("test_prepare()")
+end
+
+local function test_run()
+    error("critical failer in run()")
+end
+
+local function test_cleanup()
+end
+
+return {
+    init = test_init,
+    prepare = test_prepare,
+    run = test_run,
+    cleanup = test_cleanup
+}

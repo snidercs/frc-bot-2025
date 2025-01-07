@@ -1,5 +1,5 @@
-#include "config.hpp"
-#include "scripting.hpp"
+#include "include/config.hpp"
+#include "include/scripting.hpp"
 
 namespace config {
 
