@@ -11,9 +11,6 @@ jobs:
     # container: 
     container:
       image: wpilib/roborio-cross-ubuntu:2025-22.04
-      credentials:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_PASS }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
