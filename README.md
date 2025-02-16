@@ -1,4 +1,4 @@
-<!-- [![Build](https://github.com/snidercs/bot-2024/actions/workflows/build.yml/badge.svg)](https://github.com/snidercs/bot-2024/actions/workflows/build.yml) -->
+![Build](https://github.com/snidercs/frc-bot-2025/actions/workflows/build.yml/badge.svg)
 # Robot Firmware FRC 2025
 ## Features
 - Primary firmware in Python
