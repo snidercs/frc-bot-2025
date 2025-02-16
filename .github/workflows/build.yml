@@ -12,13 +12,19 @@ jobs:
     container:
       image: wpilib/roborio-cross-ubuntu:2025-22.04
     steps:
+      - name: Packages
+        run: apt install gcc-multilib g++-multilib python3 python3-pip cmake
+      - name: Pip
+        run: pip install meson robotpy robotpy-build
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           submodules: true
       - name: Grant execute permission
         run: chmod +x gradlew
-      - name: Build Firmware
-        run: ./util/build-github.sh
+      - name: Sync python
+        run: robotpy sync
         env:
           GENERATE_EMPTY_DRIVE_TRAJECTORIES: true
+      - name: Test python
+        run: robotpy test
