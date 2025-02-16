@@ -17,7 +17,10 @@ class MyRobot(wpilib.TimedRobot):
         self.motor = wpilib.Talon(3)
         self.timer = wpilib.Timer()
         self.loops = 0
-        
+        self.limelight = None
+    
+    def limelightInit(self):
+        # save for reference
         print("----------- LIMELIGHT -----------")
         addy = limelight.discover_limelights()[0]
         self.limelight = ll = limelight.Limelight(addy)
@@ -49,8 +52,9 @@ class MyRobot(wpilib.TimedRobot):
         self.timer.start()
 
     def teleopPeriodic (self):
-        status = self.limelight.get_status()
-        result = self.limelight.get_results()
-        parsed_result = limelightresults.parse_results(result)
-        for fiducial_result in parsed_result.fiducialResults:
-            print(f"fiducial_id: {fiducial_result.fiducial_id}, cpu: {status['cpu']}")
+        if self.limelight != None:
+            status = self.limelight.get_status()
+            result = self.limelight.get_results()
+            parsed_result = limelightresults.parse_results(result)
+            for fiducial_result in parsed_result.fiducialResults:
+                print(f"fiducial_id: {fiducial_result.fiducial_id}, cpu: {status['cpu']}")

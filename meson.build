@@ -70,7 +70,7 @@ subdir ('src')
 
 # Tests
 if boost_dep.found()
-    subdir ('test')
+    subdir ('tests')
 endif
 
 summary ('Build type', frc_buildtype)
