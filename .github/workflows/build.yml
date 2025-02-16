@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    # container: 
+    container:
+      image: wpilib/roborio-cross-ubuntu:2025-22.04
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASS }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Grant execute permission
+        run: chmod +x gradlew
+      - name: Build Firmware
+        run: ./util/build-github.sh
+        env:
+          GENERATE_EMPTY_DRIVE_TRAJECTORIES: true
