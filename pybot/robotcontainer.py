@@ -15,6 +15,7 @@ from telemetry import Telemetry
 from phoenix6 import swerve
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
+from lifter import Lifter  # Import the Lifter class
 
 
 class RobotContainer:
@@ -50,6 +51,14 @@ class RobotContainer:
         self._logger = Telemetry(self._max_speed)
 
         self.drivetrain = TunerConstants.create_drivetrain()
+
+        # Initialize the elevator with motor IDs
+        self.elevator = Lifter([20, 14])
+
+        # Initialize the intake with motor IDs
+        self.intake = Lifter([300, 400])
+
+        self.configureButtonBindings()
 
     def configureButtonBindings(self) -> None:
         """
@@ -109,11 +118,20 @@ class RobotContainer:
         self._joystick.leftBumper().onTrue(
             self.drivetrain.runOnce(lambda: self.drivetrain.seed_field_centric())
         )
+        
+        # Configure buttons for elevator control
+        self._joystick.rightBumper().whileTrue(commands2.cmd.run(self.elevator.move_up, self.elevator))
+        self._joystick.leftTrigger().whileTrue(commands2.cmd.run(self.elevator.move_down, self.elevator))
+        self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
+
+        # Configure buttons for intake control
+        self._joystick.a().whileTrue(commands2.cmd.run(self.intake.move_up, self.intake))
+        self._joystick.b().whileTrue(commands2.cmd.run(self.intake.move_down, self.intake))
+        self._joystick.x().onTrue(commands2.cmd.runOnce(self.intake.stop, self.intake))
 
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
         )
-
     def getAutonomousCommand(self) -> commands2.Command:
         """Use this to pass the autonomous command to the main {@link Robot} class.
 
