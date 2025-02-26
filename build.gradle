@@ -85,7 +85,7 @@ model {
 
             sources.cpp {
                 source {
-                    srcDir 'test'
+                    srcDir 'tests'
                     include '**/*.cpp'
                 }
             }

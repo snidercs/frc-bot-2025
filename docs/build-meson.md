@@ -2,6 +2,11 @@
 Meson can be used to build native c++ firwmare and native lua using luabot.  This build is a proof-of concept and move toward maturing [luabot](https://github.com/luabot/luabot) so it is comparible to the other FRC-supported build systems.
 
 ## Setup
+We actually need gradle to pull in the Phoenix6 libraries for use in meson:
+```
+./gradlew installFrcUserProgramLinuxx86-64ReleaseExecutable --max-workers=2
+```
+
 First is to prepare a new directory to contain the build.  Do that, then change in to it.
 
 ```

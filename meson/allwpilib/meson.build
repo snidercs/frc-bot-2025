@@ -34,10 +34,10 @@ if frc_is_sim
         newcommands_dep = allwpilib.dependency('wpilibNewCommands')
     endif
 
-    wpilib_deps = [ wpilibc_dep, 
+    wpilib_deps = [ wpilibc_dep,
         wpiutil_dep,
         apriltag_dep,
-        wpimath_dep, 
+        wpimath_dep,
         ntcore_dep, 
         hal_dep, 
         newcommands_dep

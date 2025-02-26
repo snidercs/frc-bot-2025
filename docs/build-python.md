@@ -13,6 +13,12 @@ For mac and PC, use whatever means is most reliable for you.
 pip3 install robotpy
 ```
 
+## The Code
+It lives in a subdirectory, `pybot`, so change in to that first:
+```
+cd pybot
+```
+
 ## Sync up
 ```
 robotpy sync

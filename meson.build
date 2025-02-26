@@ -36,16 +36,18 @@ phoenix6_sonames = []
 
 if frc_is_sim
     phoenix6_sonames = '''
+        CTRE_Phoenix6_WPISim
         CTRE_SimVictorSPX
+        CTRE_PhoenixTools_Sim
         CTRE_SimProPigeon2
         CTRE_SimPigeonIMU
+        CTRE_SimProCANdi
         CTRE_SimProCANcoder
+        CTRE_SimProTalonFXS
         CTRE_SimProCANrange
         CTRE_SimProTalonFX
         CTRE_SimTalonSRX
         CTRE_SimCANCoder
-        CTRE_Phoenix6_WPISim
-        CTRE_PhoenixTools_Sim
     '''.split()
 else
     phoenix6_sonames = '''
@@ -70,7 +72,7 @@ subdir ('src')
 
 # Tests
 if boost_dep.found()
-    subdir ('test')
+    subdir ('tests')
 endif
 
 summary ('Build type', frc_buildtype)
