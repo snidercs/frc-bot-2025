@@ -151,9 +151,9 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         self._last_sim_time: units.second = 0.0
 
         # Add PID controllers
-        self.x_controller = PIDController(10.0, 0.0, 0.0)
-        self.y_controller = PIDController(10.0, 0.0, 0.0)
-        self.heading_controller = PIDController(7.5, 0.0, 0.0)
+        self.x_controller = PIDController(15.0, 1.0, 1.0)
+        self.y_controller = PIDController(15.0, 1.0, 1.0)
+        self.heading_controller = PIDController(15.0, 1.0, 1.0)
         self.heading_controller.enableContinuousInput(-math.pi, math.pi)
 
         self._has_applied_operator_perspective = False
@@ -352,16 +352,15 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             ),
             current_pose.rotation()
         )
-        print(f"speeds: {speeds}")
 
 
         # Create field-centric request with proper enum references
         request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
-            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True) \
-            .with_wheel_force_feedforwards_x(sample.fx) \
-            .with_wheel_force_feedforwards_y(sample.fy) \
+            #.with_wheel_force_feedforwards_x(sample.fx) \
+            #.with_wheel_force_feedforwards_y(sample.fy) \
 
         # Apply control
         print(f"Request: {vars(request)}")

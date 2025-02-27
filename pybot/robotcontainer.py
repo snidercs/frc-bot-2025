@@ -112,18 +112,18 @@ class RobotContainer:
 
         # Run SysId routines when holding back/start and X/Y.
         # Note that each routine should be run exactly once in a single log.
-        (self._joystick.back() & self._joystick.y()).whileTrue(
-            self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
-        )
-        (self._joystick.back() & self._joystick.x()).whileTrue(
-            self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
-        )
-        (self._joystick.start() & self._joystick.y()).whileTrue(
-            self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
-        )
-        (self._joystick.start() & self._joystick.x()).whileTrue(
-            self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
-        )
+        #(self._joystick.back() & self._joystick.y()).whileTrue(
+        #    self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
+        #)
+        #(self._joystick.back() & self._joystick.x()).whileTrue(
+        ##    self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
+        #)
+        #(self._joystick.start() & self._joystick.y()).whileTrue(
+        #    self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
+        #)
+        #(self._joystick.start() & self._joystick.x()).whileTrue(
+        #    self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
+        #)
 
         # reset the field-centric heading on left bumper press
         self._joystick.leftTrigger().onTrue(
@@ -137,7 +137,7 @@ class RobotContainer:
         self._joystick.a().whileTrue(commands2.cmd.run(self.elevator.move_down, self.elevator))
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
-        self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kBothRumble, 1)
+        #self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kBothRumble, 1)
         # Configure buttons for intake control
         #self._joystick.a().whileTrue(commands2.cmd.run(self.intake.move_up, self.intake))
         #self._joystick.b().whileTrue(commands2.cmd.run(self.intake.move_down, self.intake))
@@ -147,9 +147,9 @@ class RobotContainer:
             lambda state: self._logger.telemeterize(state)
         )
 
-    def getAutonomousCommand(self) -> commands2.Command:
+    #def getAutonomousCommand(self) -> commands2.Command:
         """Use this to pass the autonomous command to the main {@link Robot} class.
 
         :returns: the command to run in autonomous
         """
-        return commands2.cmd.print_("No autonomous command configured")
+    #    return commands2.cmd.print_("No autonomous command configured")

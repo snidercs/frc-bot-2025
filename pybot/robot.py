@@ -28,7 +28,6 @@ class MyRobot(wpilib.TimedRobot):
         # autonomous chooser on the dashboard.
         self.container = RobotContainer()
         self.scheduler = commands2.CommandScheduler.getInstance()
-        self.field = wpilib.Field2d()
         self.timer = wpilib.Timer()
         try:
             self.trajectory = choreo.load_swerve_trajectory("COMPLEXCRAZY")
@@ -47,6 +46,7 @@ class MyRobot(wpilib.TimedRobot):
         # commands, running already-scheduled commands, removing finished or interrupted commands,
         # and running subsystem periodic() methods.  This must be called from the robot's periodic
         # block in order for anything in the Command-based framework to work.
+        
         self.scheduler.run()
 
     def disabledInit(self) -> None:
@@ -83,31 +83,30 @@ class MyRobot(wpilib.TimedRobot):
                 self.container.drivetrain.follow_trajectory(sample)
 
         print(f"Sample: {sample}\nTimer: {self.timer.get()} \nX Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
-        self.field.setRobotPose(self.container.drivetrain.get_pose())
 
     def teleopInit(self) -> None:
         # This makes sure that the autonomous stops running when
         # teleop starts running. If you want the autonomous to
         # continue until interrupted by another command, remove
         # this line or comment it out.
-        if self.autonomousCommand:
-            self.autonomousCommand.cancel()
+        #if self.autonomousCommand:
+        #    self.autonomousCommand.cancel()
 
         # Configure button bindings
         self.container.configureButtonBindings()
 
     def teleopPeriodic(self) -> None:
         """This function is called periodically during operator control"""
-        #
-        # print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
-        #self.field.setRobotPose(self.container.drivetrain.get_pose())
+        pass
 
     def testInit(self) -> None:
         # Cancels all running commands at the start of test mode
         commands2.CommandScheduler.getInstance().cancelAll()
 
     def simulationInit(self) -> None:
-        wpilib.simulation.DriverStationSim.setDsAttached(True)
+        #wpilib.simulation.DriverStationSim.setDsAttached(True)
+        #print("YABADABADO")
+        pass
     def simulationPeriodic(self) -> None:
-        print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
-        self.field.setRobotPose(self.container.drivetrain.get_pose())
+        #print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
+        pass
