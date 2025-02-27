@@ -16,6 +16,8 @@ from phoenix6 import swerve
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 from lifter import Lifter  # Import the Lifter class
+import choreo  # Make sure to import choreo
+import wpilib
 
 
 class RobotContainer:
@@ -27,6 +29,7 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
+        self.timer = wpilib.Timer()
         self._max_speed = (
             TunerConstants.speed_at_12_volts * .3
         )  # speed_at_12_volts desired top speed
@@ -140,9 +143,30 @@ class RobotContainer:
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
         )
+
     def getAutonomousCommand(self) -> commands2.Command:
         """Use this to pass the autonomous command to the main {@link Robot} class.
 
         :returns: the command to run in autonomous
         """
-        return commands2.cmd.print_("No autonomous command configured")
+        try:
+            trajectory = choreo.load_swerve_trajectory("moveAnDropBLUELEFT")
+        except ValueError:
+            trajectory = None
+
+        if trajectory:
+            initial_pose = trajectory.get_initial_pose(self.is_red_alliance())
+            if initial_pose:
+                self.drivetrain.reset_pose(initial_pose)
+
+            return commands2.cmd.run(
+                lambda: self.drivetrain.follow_trajectory(
+                    trajectory.sample_at(self.timer.get(), self.is_red_alliance())
+                ),
+                self.drivetrain
+            )
+        else:
+            return commands2.cmd.print_("No autonomous command configured")
+
+    def is_red_alliance(self):
+        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed

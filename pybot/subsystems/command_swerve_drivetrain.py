@@ -6,6 +6,7 @@ from typing import Callable, overload
 from wpilib import DriverStation, Notifier, RobotController
 from wpilib.sysid import SysIdRoutineLog
 from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.kinematics import ChassisSpeeds
 
 
 class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
@@ -318,3 +319,31 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         :type vision_measurement_std_devs:  tuple[float, float, float] | None
         """
         swerve.SwerveDrivetrain.add_vision_measurement(self, vision_robot_pose, utils.fpga_to_current_time(timestamp), vision_measurement_std_devs)
+
+    def follow_trajectory(self, sample):
+        # Get the current pose of the robot
+        pose = super().get_state()
+        print(pose)
+        
+        # Calculate PID feedback corrections for position and heading
+        x_feedback = self.x_controller.calculate(pose.X(), sample.x)
+        y_feedback = self.y_controller.calculate(pose.Y(), sample.y)
+        heading_feedback = self.heading_controller.calculate(
+            pose.rotation().radians(), sample.heading
+        )
+        
+        # Combine feedforward velocities from the sample with feedback corrections
+        speeds = ChassisSpeeds(
+            sample.vx + x_feedback,
+            sample.vy + y_feedback,
+            sample.omega + heading_feedback
+        )
+        
+        # Create a field-centric speed request with velocity control for drive and position control for steering
+        request = swerve.ApplyFieldSpeeds().with_speeds(speeds) \
+            .with_drive_request_type(swerve.swerve_module.DriveRequestType.VelocityDutyCycle) \
+            .with_steer_request_type(swerve.swerve_module.SteerRequestType.MotionMagic) \
+            .with_desaturate_wheel_speeds(True)  # Ensure wheel speeds are desaturated
+        
+        # Apply the generated request to the drivetrain
+        self.drivetrain.set_control(request)

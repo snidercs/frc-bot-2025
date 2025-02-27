@@ -28,7 +28,8 @@ robotpy_extras = [
 # Other pip packages to install
 requires = [
     'limelightlib-python',
-    'phoenix6'
+    'phoenix6',
+    'sleipnirgroup-choreolib'
 ]
 
 #################
