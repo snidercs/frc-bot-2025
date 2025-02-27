@@ -29,7 +29,7 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
-        self.timer = wpilib.Timer()
+        
         self._max_speed = (
             TunerConstants.speed_at_12_volts * .3
         )  # speed_at_12_volts desired top speed
@@ -152,24 +152,4 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        try:
-            trajectory = choreo.load_swerve_trajectory("COMPLEXCRAZY")
-        except ValueError:
-            trajectory = None
-
-        if trajectory:
-            initial_pose = trajectory.get_initial_pose(self.is_red_alliance())
-            if initial_pose:
-                self.drivetrain.reset_pose(initial_pose)
-
-            return commands2.cmd.run(
-                lambda: self.drivetrain.follow_trajectory(
-                    trajectory.sample_at(self.timer.get(), self.is_red_alliance())
-                ),
-                self.drivetrain
-            )
-        else:
-            return commands2.cmd.print_("No autonomous command configured")
-
-    def is_red_alliance(self):
-        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
+        return commands2.cmd.print_("No autonomous command configured")

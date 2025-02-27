@@ -8,6 +8,7 @@
 import wpilib
 import commands2
 import typing
+import choreo 
 
 from robotcontainer import RobotContainer
 
@@ -19,6 +20,8 @@ class MyRobot(wpilib.TimedRobot):
     """
 
     autonomousCommand: typing.Optional[commands2.Command] = None
+    def is_red_alliance(self):
+        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
     
     def robotInit(self) -> None:
         # Instantiate our RobotContainer.  This will perform all our button bindings, and put our
@@ -26,6 +29,12 @@ class MyRobot(wpilib.TimedRobot):
         self.container = RobotContainer()
         self.scheduler = commands2.CommandScheduler.getInstance()
         self.field = wpilib.Field2d()
+        self.timer = wpilib.Timer()
+        try:
+            self.trajectory = choreo.load_swerve_trajectory("COMPLEXCRAZY")
+        except ValueError:
+            print("Trajectory not found")
+            self.trajectory = None
 
     def robotPeriodic(self) -> None:
         """This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
@@ -50,13 +59,30 @@ class MyRobot(wpilib.TimedRobot):
 
     def autonomousInit(self) -> None:
         """This autonomous runs the autonomous command selected by your RobotContainer class."""
-        self.autonomousCommand = self.container.getAutonomousCommand()
-        if self.autonomousCommand:
-            self.autonomousCommand.schedule()
+        ##self.autonomousCommand = self.container.getAutonomousCommand()
+        #if self.autonomousCommand:
+        #    self.autonomousCommand.schedule()
+        if self.trajectory:
+            # Get the initial pose of the trajectory
+            initial_pose = self.trajectory.get_initial_pose(self.is_red_alliance())
+
+            if initial_pose:
+                # Reset odometry to the start of the trajectory
+                self.container.drivetrain.reset_pose(initial_pose)
+
+        # Reset and start the timer when the autonomous period begins
+        self.timer.restart()
 
     def autonomousPeriodic(self) -> None:
         """This function is called periodically during autonomous"""
-        print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
+        if self.trajectory:
+            # Sample the trajectory at the current time into the autonomous period
+            sample = self.trajectory.sample_at(self.timer.get(), self.is_red_alliance())
+
+            if sample:
+                self.container.drivetrain.follow_trajectory(sample)
+
+        print(f"Sample: {sample}\nTimer: {self.timer.get()} \nX Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
         self.field.setRobotPose(self.container.drivetrain.get_pose())
 
     def teleopInit(self) -> None:
