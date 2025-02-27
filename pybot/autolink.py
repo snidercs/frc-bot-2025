@@ -44,10 +44,6 @@ class AutonomousCommand(commands2.Command):
             if sample:
                 # Command the drivetrain to follow the sampled trajectory
                 self.drivetrain.follow_trajectory(sample)
-
-        # Print debug information
-        print(f"Sample: {sample}\nTimer: {self.timer.get()} \nX Pos: {self.drivetrain.get_pose().X()} \nY Pos: {self.drivetrain.get_pose().Y()}\nRot: {self.drivetrain.get_pose().rotation().degrees()}")
-
     def isFinished(self):
         """
         Returns true when the command should end.
