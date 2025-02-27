@@ -11,22 +11,15 @@ import typing
 
 from robotcontainer import RobotContainer
 
-# class MyRobot(commands2.TimedCommandRobot):
 class MyRobot(wpilib.TimedRobot):
-    """
-    Command v2 robots are encouraged to inherit from TimedCommandRobot, which
-    has an implementation of robotPeriodic which runs the scheduler for you
-    """
-
     autonomousCommand: typing.Optional[commands2.Command] = None
 
     def robotInit(self) -> None:
-        # Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-        # autonomous chooser on the dashboard.
         self.container = RobotContainer()
         self.scheduler = commands2.CommandScheduler.getInstance()
 
     def robotPeriodic(self) -> None:
+
         """This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
         that you want ran during disabled, autonomous, teleoperated and test.
 
@@ -41,25 +34,22 @@ class MyRobot(wpilib.TimedRobot):
         self.scheduler.run()
 
     def disabledInit(self) -> None:
-        """This function is called once each time the robot enters Disabled mode."""
         pass
 
     def disabledPeriodic(self) -> None:
-        """This function is called periodically when disabled"""
         pass
 
     def autonomousInit(self) -> None:
-        """This autonomous runs the autonomous command selected by your RobotContainer class."""
         self.autonomousCommand = self.container.getAutonomousCommand()
         if self.autonomousCommand:
             self.autonomousCommand.schedule()
 
 
     def autonomousPeriodic(self) -> None:
-        """This function is called periodically during autonomous"""
         pass
 
     def teleopInit(self) -> None:
+
         # This makes sure that the autonomous stops running when
         # teleop starts running. If you want the autonomous to
         # continue until interrupted by another command, remove
@@ -67,16 +57,13 @@ class MyRobot(wpilib.TimedRobot):
         #if self.autonomousCommand:
         #    self.autonomousCommand.cancel()
 
-        # Configure button bindings
         self.container.configureButtonBindings()
 
     def teleopPeriodic(self) -> None:
-        """This function is called periodically during operator control"""
         pass
 
     def testInit(self) -> None:
-        # Cancels all running commands at the start of test mode
-        commands2.CommandScheduler.getInstance().cancelAll()
+        self.scheduler.cancelAll()
 
     def simulationInit(self) -> None:
         pass
