@@ -7,6 +7,7 @@ from wpilib import DriverStation, Notifier, RobotController
 from wpilib.sysid import SysIdRoutineLog
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
+from wpimath.controller import PIDController
 
 
 class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
@@ -148,6 +149,12 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
 
         self._sim_notifier: Notifier | None = None
         self._last_sim_time: units.second = 0.0
+
+        # Add PID controllers
+        self.x_controller = PIDController(10.0, 0.0, 0.0)
+        self.y_controller = PIDController(10.0, 0.0, 0.0)
+        self.heading_controller = PIDController(7.5, 0.0, 0.0)
+        self.heading_controller.enableContinuousInput(-math.pi, math.pi)
 
         self._has_applied_operator_perspective = False
         """Keep track if we've ever applied the operator perspective before or not"""
@@ -319,31 +326,39 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         :type vision_measurement_std_devs:  tuple[float, float, float] | None
         """
         swerve.SwerveDrivetrain.add_vision_measurement(self, vision_robot_pose, utils.fpga_to_current_time(timestamp), vision_measurement_std_devs)
+    def get_pose(self) -> Pose2d:
+        """
+        Gets the current pose of the robot.
 
+        :returns: The current pose of the robot.
+        :rtype: Pose2d
+        """
+        return super().get_state().pose
     def follow_trajectory(self, sample):
-        # Get the current pose of the robot
-        pose = super().get_state()
-        print(pose)
-        
-        # Calculate PID feedback corrections for position and heading
-        x_feedback = self.x_controller.calculate(pose.X(), sample.x)
-        y_feedback = self.y_controller.calculate(pose.Y(), sample.y)
+        # Get current pose from swerve state
+        state = super().get_state()
+        current_pose = state.pose
+
+        # Calculate feedback corrections
+        x_feedback = self.x_controller.calculate(current_pose.X(), sample.x)
+        y_feedback = self.y_controller.calculate(current_pose.Y(), sample.y)
         heading_feedback = self.heading_controller.calculate(
-            pose.rotation().radians(), sample.heading
+            current_pose.rotation().radians(), 
+            sample.heading
         )
-        
-        # Combine feedforward velocities from the sample with feedback corrections
+
+        # Combine feedforward and feedback
         speeds = ChassisSpeeds(
             sample.vx + x_feedback,
             sample.vy + y_feedback,
             sample.omega + heading_feedback
         )
-        
-        # Create a field-centric speed request with velocity control for drive and position control for steering
-        request = swerve.ApplyFieldSpeeds().with_speeds(speeds) \
-            .with_drive_request_type(swerve.swerve_module.DriveRequestType.VelocityDutyCycle) \
-            .with_steer_request_type(swerve.swerve_module.SteerRequestType.MotionMagic) \
-            .with_desaturate_wheel_speeds(True)  # Ensure wheel speeds are desaturated
-        
-        # Apply the generated request to the drivetrain
-        self.drivetrain.set_control(request)
+
+        # Create field-centric request with proper enum references
+        request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
+            .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
+            .with_desaturate_wheel_speeds(True)
+
+        # Apply control
+        self.set_control(request)

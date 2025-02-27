@@ -25,6 +25,7 @@ class MyRobot(wpilib.TimedRobot):
         # autonomous chooser on the dashboard.
         self.container = RobotContainer()
         self.scheduler = commands2.CommandScheduler.getInstance()
+        self.field = wpilib.Field2d()
 
     def robotPeriodic(self) -> None:
         """This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
@@ -55,7 +56,8 @@ class MyRobot(wpilib.TimedRobot):
 
     def autonomousPeriodic(self) -> None:
         """This function is called periodically during autonomous"""
-        pass
+        print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
+        self.field.setRobotPose(self.container.drivetrain.get_pose())
 
     def teleopInit(self) -> None:
         # This makes sure that the autonomous stops running when
@@ -70,13 +72,16 @@ class MyRobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self) -> None:
         """This function is called periodically during operator control"""
-        pass
+        #
+        # print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
+        #self.field.setRobotPose(self.container.drivetrain.get_pose())
 
     def testInit(self) -> None:
         # Cancels all running commands at the start of test mode
         commands2.CommandScheduler.getInstance().cancelAll()
 
     def simulationInit(self) -> None:
-        pass
+        wpilib.simulation.DriverStationSim.setDsAttached(True)
     def simulationPeriodic(self) -> None:
-        pass
+        print(f"X Pos: {self.container.drivetrain.get_pose().X()} \nY Pos: {self.container.drivetrain.get_pose().Y()}\nRot: {self.container.drivetrain.get_pose().rotation().degrees()}")
+        self.field.setRobotPose(self.container.drivetrain.get_pose())

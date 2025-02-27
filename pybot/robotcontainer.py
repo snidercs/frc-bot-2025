@@ -128,13 +128,16 @@ class RobotContainer:
         # reset the field-centric heading on left bumper press
         self._joystick.leftTrigger().onTrue(
             self.drivetrain.runOnce(lambda: self.drivetrain.seed_field_centric())
+            
         )
         
         # Configure buttons for elevator control
         self._joystick.y().whileTrue(commands2.cmd.run(self.elevator.move_up, self.elevator))
+        
         self._joystick.a().whileTrue(commands2.cmd.run(self.elevator.move_down, self.elevator))
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
+        self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kBothRumble, 1)
         # Configure buttons for intake control
         #self._joystick.a().whileTrue(commands2.cmd.run(self.intake.move_up, self.intake))
         #self._joystick.b().whileTrue(commands2.cmd.run(self.intake.move_down, self.intake))
@@ -150,7 +153,7 @@ class RobotContainer:
         :returns: the command to run in autonomous
         """
         try:
-            trajectory = choreo.load_swerve_trajectory("moveAnDropBLUELEFT")
+            trajectory = choreo.load_swerve_trajectory("COMPLEXCRAZY")
         except ValueError:
             trajectory = None
 
