@@ -18,6 +18,7 @@ from wpimath.units import rotationsToRadians
 from lifter import Lifter  # Import the Lifter class
 import choreo  # Make sure to import choreo
 import wpilib
+from autolink import AutonomousCommand
 
 
 class RobotContainer:
@@ -100,31 +101,7 @@ class RobotContainer:
                 )
             )
         )
-
-        #self._joystick.a().whileTrue(self.drivetrain.apply_request(lambda: self._brake))
-        #self._joystick.b().whileTrue(
-        #    self.drivetrain.apply_request(
-        #        lambda: self._point.with_module_direction(
-        #            Rotation2d(-self._joystick.getLeftY(), -self._joystick.getLeftX())
-        #        )
-        #    )
-        #)
-
-        # Run SysId routines when holding back/start and X/Y.
-        # Note that each routine should be run exactly once in a single log.
-        #(self._joystick.back() & self._joystick.y()).whileTrue(
-        #    self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
-        #)
-        #(self._joystick.back() & self._joystick.x()).whileTrue(
-        ##    self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
-        #)
-        #(self._joystick.start() & self._joystick.y()).whileTrue(
-        #    self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
-        #)
-        #(self._joystick.start() & self._joystick.x()).whileTrue(
-        #    self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
-        #)
-
+        
         # reset the field-centric heading on left bumper press
         self._joystick.leftTrigger().onTrue(
             self.drivetrain.runOnce(lambda: self.drivetrain.seed_field_centric())
@@ -147,9 +124,13 @@ class RobotContainer:
             lambda state: self._logger.telemeterize(state)
         )
 
-    #def getAutonomousCommand(self) -> commands2.Command:
+    def getAutonomousCommand(self) -> commands2.Command:
         """Use this to pass the autonomous command to the main {@link Robot} class.
 
         :returns: the command to run in autonomous
         """
-    #    return commands2.cmd.print_("No autonomous command configured")
+        return AutonomousCommand(self.drivetrain, "COMPLEXCRAZY", is_red_alliance=self.is_red_alliance())
+    
+    def is_red_alliance(self):
+        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
+    

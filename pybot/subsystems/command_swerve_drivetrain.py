@@ -335,35 +335,25 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         """
         return super().get_state().pose
     def follow_trajectory(self, sample):
+        # Enable continuous input for heading controller
+        self.heading_controller.enableContinuousInput(-math.pi, math.pi)
+
         # Get current pose from swerve state
-        state = super().get_state()
-        current_pose = state.pose
-        print("Current State: ", vars(state))
+        current_pose = self.get_pose()
 
         # Combine feedforward and feedback
-        print(f"vx: {sample.vx + self.x_controller.calculate(current_pose.X(), sample.x)}")
-        print(f"vy: {sample.vy + self.y_controller.calculate(current_pose.Y(), sample.y)}")
-        speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + self.x_controller.calculate(current_pose.X(), sample.x),
-            sample.vy + self.y_controller.calculate(current_pose.Y(), sample.y),
-            sample.omega + self.heading_controller.calculate(
-                current_pose.rotation().radians(), 
-                sample.heading
-            ),
-            current_pose.rotation()
-        )
+        vx = sample.vx + self.x_controller.calculate(current_pose.X(), sample.x)
+        vy = sample.vy + self.y_controller.calculate(current_pose.Y(), sample.y)
+        omega = sample.omega + self.heading_controller.calculate(current_pose.rotation().radians(), sample.heading)
 
+        speeds = ChassisSpeeds(vx, vy, omega)
 
         # Create field-centric request with proper enum references
         request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
-            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE) \
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True) \
-            #.with_wheel_force_feedforwards_x(sample.fx) \
-            #.with_wheel_force_feedforwards_y(sample.fy) \
-
-        # Apply control
-        print(f"Request: {vars(request)}")
+            .with_wheel_force_feedforwards_x(sample.fx) \
+            .with_wheel_force_feedforwards_y(sample.fy)
 
         self.set_control(request)
-        
