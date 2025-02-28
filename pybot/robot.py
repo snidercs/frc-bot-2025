@@ -30,13 +30,13 @@ class MyRobot(wpilib.TimedRobot):
         self.list_traj_files()
 
     def list_traj_files(self) -> None:
-        traj_dir = 'deploy/choreo'
+        traj_dir = f"{wpilib.getOperatingDirectory()}/deploy/choreo"
         traj_files = [f for f in os.listdir(traj_dir) if f.endswith('.traj')]
         
         for traj_file in traj_files:
             self.chooser.addOption(traj_file.removesuffix('.traj'), traj_file.removesuffix('.traj'))
-            self.chooser.setDefaultOption(traj_file.removesuffix('.traj'), traj_file.removesuffix('.traj'))
         
+        self.chooser.setDefaultOption(traj_files[0].removesuffix('.traj'), traj_files[0].removesuffix('.traj'))
         wpilib.SmartDashboard.putData('Trajectory Files', self.chooser)
 
     def get_selected_traj_file(self) -> str:

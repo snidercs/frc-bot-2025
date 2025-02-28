@@ -357,3 +357,14 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             .with_wheel_force_feedforwards_y(sample.fy)
 
         self.set_control(request)
+
+    def stop(self):
+        """
+        Stops the swerve drivetrain by setting all speeds to zero.
+        """
+        speeds = ChassisSpeeds(0.0, 0.0, 0.0)
+        request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE) \
+            .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
+            .with_desaturate_wheel_speeds(True)
+        self.set_control(request)

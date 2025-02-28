@@ -17,6 +17,7 @@ class AutonomousCommand(commands2.Command):
         self.timer = wpilib.Timer()
         self.is_red_alliance = is_red_alliance
         self.addRequirements(self.drivetrain)  # Ensure the drivetrain is a requirement for this command
+        self.laststamp = 0
 
     def initialize(self):
         """
@@ -42,8 +43,17 @@ class AutonomousCommand(commands2.Command):
             sample = self.trajectory.sample_at(self.timer.get(), self.is_red_alliance)
 
             if sample:
-                # Command the drivetrain to follow the sampled trajectory
-                self.drivetrain.follow_trajectory(sample)
+                print(f"Sampled trajectory at {sample.timestamp} seconds")
+                print(f"laststamp: {self.laststamp}")
+                if sample.timestamp != self.laststamp:
+
+                    # Command the drivetrain to follow the sampled trajectory
+                    self.drivetrain.follow_trajectory(sample)
+                    self.laststamp = sample.timestamp
+                else:
+                    self.drivetrain.stop()
+
+            
     def isFinished(self):
         """
         Returns true when the command should end.
