@@ -1,14 +1,13 @@
 import logging
 from phoenix6.hardware import talon_fx
 from phoenix6.configs.talon_fx_configs import TalonFXConfiguration, MotorOutputConfigs
-from phoenix6.signals import InvertedValue
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Define position limits
-POS_MINS = [-100.0, -100.0]
+POS_MINS = [-0.05, -0.03]
 POS_MAXES = [0.3, 1.0]
 
 class Lifter:
@@ -36,21 +35,21 @@ class Lifter:
     def can_run_motors(self):
         for i, motor in enumerate(self.motors):
             val = float(motor.get_position().value)
-            if val <= POS_MINS[i] or val >= POS_MAXES[i]:
+            if val >= POS_MINS[i] or val <= POS_MAXES[i]:
                 return False
         return True
     
     def can_move_down(self):
         for i, motor in enumerate(self.motors):
             val = float(motor.get_position().value)
-            if val >= POS_MAXES[i]:
+            if val >= POS_MINS[i]:
                 return False
         return True
     
     def can_move_up(self):
         for i, motor in enumerate(self.motors):
             val = float(motor.get_position().value)
-            if val <= POS_MINS[i]:
+            if val <= POS_MAXES[i]:
                 return False
         return True
 
@@ -61,7 +60,7 @@ class Lifter:
                 return
 
             for motor in self.motors:
-                motor.set(0.3)
+                motor.set(-.10)
         except Exception as e:
             logger.error(f"Error moving down: {e}")
 
@@ -72,7 +71,7 @@ class Lifter:
                 return
 
             for motor in self.motors:
-                motor.set(-0.3)
+                motor.set(0.10)
         except Exception as e:
             logger.error(f"Error moving up: {e}")
 
