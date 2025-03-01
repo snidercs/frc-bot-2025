@@ -98,15 +98,15 @@ class RobotContainer:
         self._joystick.leftTrigger().onTrue(
             self.drivetrain.runOnce(lambda: self.drivetrain.seed_field_centric())
         )
-        
+       
         # Configure buttons for elevator control
-        #self._joystick.y().whileTrue(commands2.cmd.run(
-        #    lambda: self.elevator.moveUp, self.elevator
-        #))
+        self._joystick.y().whileTrue (commands2.cmd.run(
+           lambda: self.elevator.moveUp(), self.elevator
+        ))
 
-        #self._joystick.a().whileTrue(commands2.cmd.run(
-        #    lambda: self.elevator.moveDown, self.elevator
-        #))
+        self._joystick.a().whileTrue(commands2.cmd.run(
+           lambda: self.elevator.moveDown(), self.elevator
+        ))
     
         
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
