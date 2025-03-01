@@ -58,13 +58,13 @@ class AutonomousCommand(commands2.Command):
                     for marker in self.event_markers:
                         if marker.timestamp <= self.timer.get() < marker.timestamp + 0.2:
                             if marker.event not in self.triggered_events:
-                                self.trigger_event(marker.event)
+                                self.triggerEvent(marker.event)
                                 self.triggered_events.add(marker.event)
 
                 else:
                     self.drivetrain.stop()
 
-    def trigger_event(self, event):
+    def triggerEvent(self, event):
         """
         Trigger the action associated with the event.
         """
