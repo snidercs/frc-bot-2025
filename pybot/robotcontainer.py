@@ -101,11 +101,11 @@ class RobotContainer:
         
         # Configure buttons for elevator control
         #self._joystick.y().whileTrue(commands2.cmd.run(
-        #    lambda: self.elevator.move_up, self.elevator
+        #    lambda: self.elevator.moveUp, self.elevator
         #))
 
         #self._joystick.a().whileTrue(commands2.cmd.run(
-        #    lambda: self.elevator.move_down, self.elevator
+        #    lambda: self.elevator.moveDown, self.elevator
         #))
     
         
@@ -128,8 +128,8 @@ class RobotContainer:
         #self._joystick.b().whileTrue(commands2.cmd.run(lambda: logging.info(self.elevator.get_positions()), self.elevator))
 
         # Configure buttons for intake control
-        self._joystick.rightBumper().whileTrue(commands2.cmd.run(lambda: self.intake.set_motor(.2), self.intake))
-        self._joystick.leftBumper().whileTrue(commands2.cmd.run(lambda: self.intake.set_motor(-.2), self.intake))
+        self._joystick.rightBumper().whileTrue(commands2.cmd.run(lambda: self.intake.setMotor(.2), self.intake))
+        self._joystick.leftBumper().whileTrue(commands2.cmd.run(lambda: self.intake.setMotor(-.2), self.intake))
         self._joystick.b().onTrue(commands2.cmd.runOnce(self.intake.stop, self.intake))
 
         self.drivetrain.register_telemetry(

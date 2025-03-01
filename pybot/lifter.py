@@ -9,7 +9,7 @@ class Lifter:
     def __init__(self, master_id):
         self.motor = talon_fx.TalonFX(master_id)
 
-    def move_down(self):
+    def moveDown(self):
         try:
             if self.motor.get_reverse_limit() == 0:
                 logger.warning("Reverse limit reached; cannot move down")
@@ -20,7 +20,7 @@ class Lifter:
         except Exception as e:
             logger.error(f"Error moving down: {e}")
 
-    def move_up(self):
+    def moveUp(self):
         try:
             if self.motor.get_forward_limit() == 0:
                 logger.warning("Forward limit reached; cannot move up")
@@ -38,7 +38,7 @@ class Lifter:
         except Exception as e:
             logger.error(f"Error stopping motor: {e}")
         
-    def set_motor(self, value):
+    def setMotor(self, value):
         try:
             self.motor.set(value)
             logging.info(f"SETTING TO {value}")

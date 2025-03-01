@@ -71,10 +71,10 @@ class AutonomousCommand(commands2.Command):
         # Implement the actions to be triggered by the event
         if event == "CoralPlace":
             # Perform some action
-            self.intake.set_motor(0.2)
+            self.intake.setMotor(0.2)
         elif event == "CoralIntake":
             # Perform another action
-            self.intake.set_motor(-0.2)
+            self.intake.setMotor(-0.2)
 
     def isFinished(self):
         """
