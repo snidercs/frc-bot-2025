@@ -22,7 +22,7 @@ class Lifter:
                 self.stop()
             else:
                 logger.info("Moving down")
-                self.motor.set(-0.15)  # Gentle downward movement
+                self.motor.set(-0.2)  # Gentle downward movement
         except Exception as e:
             logger.error(f"Error moving down: {e}")
 
@@ -33,7 +33,7 @@ class Lifter:
                 self.stop()
             else:
                 logger.info("Moving up")
-                self.motor.set(0.2)  # Upward movement
+                self.motor.set(0.3)  # Upward movement
         except Exception as e:
             logger.error(f"Error moving up: {e}")
 

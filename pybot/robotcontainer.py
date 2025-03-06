@@ -36,7 +36,7 @@ class RobotContainer:
             TunerConstants.speed_at_12_volts * .6
         )  # speed_at_12_volts desired top speed
         self._max_angular_rate = rotationsToRadians(
-            0.75 * .5
+            0.75 * .4
             #maybe limit this rotational
         )  # 3/4 of a rotation per second max angular velocity
 
@@ -132,7 +132,7 @@ class RobotContainer:
 
         # Configure buttons for intake control
         self._joystick.rightBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(.2),
+            lambda: self.intake.setMotor(1),
             lambda: self.intake.stop()
         ))
 
