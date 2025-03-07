@@ -70,8 +70,8 @@ class RobotContainer:
         # making it closer to 1 will make the decay slower and smoother.
 
         # Initialize PID controllers for smoothing
-        self._pid_x = PIDController(1.005, 0.0, 0.0)
-        self._pid_y = PIDController(1.005, 0.0, 0.0)
+        self._pid_x = PIDController(0.8, 0.0, 0.0)
+        self._pid_y = PIDController(0.8, 0.0, 0.0)
         self._pid_rot = PIDController(1.6, 0.0, 0.0)
 
         # Configure PID controllers
@@ -104,10 +104,10 @@ class RobotContainer:
             self.drivetrain.apply_request(
                 lambda: (
                     self._drive.with_velocity_x(
-                        self._driveMultiplier * self._smooth_input(self._joystick.getLeftX() * self._max_speed, self.drivetrain.get_chassis_speed().vx, 'x') 
+                        self.drivetrain.get_chassis_speed().vx + (self._driveMultiplier * self._smooth_input(self._joystick.getLeftX() * self._max_speed, self.drivetrain.get_chassis_speed().vx, 'x') )
                     )  # Drive forward with negative Y (forward) and left trigger for acceleration
                     .with_velocity_y(
-                        self._driveMultiplier * self._smooth_input(self._joystick.getLeftY() * self._max_speed, self.drivetrain.get_chassis_speed().vy, 'y') 
+                        self.drivetrain.get_chassis_speed().vy + (self._driveMultiplier * self._smooth_input(self._joystick.getLeftY() * self._max_speed, self.drivetrain.get_chassis_speed().vy, 'y') )
                     )  # Drive left with negative X (left) and left trigger for acceleration
                     .with_rotational_rate(
                         self._driveMultiplier * self._smooth_input(self._joystick.getRightX() * self._max_angular_rate, self.drivetrain.get_chassis_speed().omega, 'rot') 
@@ -165,10 +165,13 @@ class RobotContainer:
         return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
 
     def _smooth_input(self, set_point, chassis_speeds, axis):
+        return 0.8 * (set_point - chassis_speeds)
+        
         print(f"Pre Speeds: {self.drivetrain.get_chassis_speed()}")
         if abs(set_point) <= 0.1:
             smoothed_value = 0
         elif axis == 'x':
+            
             smoothed_value = self._pid_x.calculate(chassis_speeds, set_point)
         elif axis == 'y':
             smoothed_value = self._pid_y.calculate(chassis_speeds, set_point)
