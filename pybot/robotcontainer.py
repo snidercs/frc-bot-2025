@@ -97,12 +97,6 @@ class RobotContainer:
             raw_heading = self.drivetrain.get_state().raw_heading.radians()
             return raw_heading % (2 * math.pi)
         
-        def mapCoordinates(curX, curY, heading):
-            newX = curX * math.cos(heading - 90) - curY * math.sin(heading - 90)
-            newY = curX * math.sin(heading - 90) + curY * math.cos(heading - 90)
-
-            return (newX, newY)
-        
         def field_to_robot(t_vx, t_vy, theta):
             R = np.array([
                 [np.cos(theta), np.sin(theta)],
@@ -135,9 +129,6 @@ class RobotContainer:
             vx_target = floor(self._driveMultiplier * self._joystick.getLeftY()) * self._max_speed
             vy_target = floor(self._driveMultiplier * self._joystick.getLeftX()) * self._max_speed
 
-            #(vx_target, vy_target) = mapCoordinates(vx_target, vy_target, heading)
-            #(vx_current, vy_current) = mapCoordinates(vx_current, vy_current, heading)
-
             (vx_target, vy_target) = field_to_robot(vx_target, vy_target, heading)
 
             vx = calculate_velocity_x(vx_current, vx_target)
@@ -154,17 +145,6 @@ class RobotContainer:
                 # Drive counterclockwise with negative X (left)
                 .with_rotational_rate(rot))
             
-        def calculate_request_raw():
-            vx_target = floor(self._driveMultiplier * self._joystick.getLeftY()) * self._max_speed
-            vy_target = floor(self._driveMultiplier * self._joystick.getLeftX()) * self._max_speed
-            omega = floor(self._driveMultiplier * self._joystick.getRightX()) * self._max_angular_rate
-
-            #heading = getNormalizedHeading()
-            heading = self.drivetrain.get_state().raw_heading.radians()
-            print('%f' % heading)
-
-            return (self._drive.with_velocity_x(vx_target).with_velocity_y(vy_target).with_rotational_rate(omega))
-        
         # Drivetrain will execute this command periodically
         self.drivetrain.setDefaultCommand(self.drivetrain.apply_request(calculate_request))
 
