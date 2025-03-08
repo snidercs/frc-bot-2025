@@ -16,7 +16,6 @@ from phoenix6 import swerve
 from wpimath.units import rotationsToRadians
 from lifter import Lifter  # Import the Lifter class
 import wpilib
-from autolink import AutonomousCommand
 import logging
 import math
 from wpimath.controller import PIDController
@@ -116,18 +115,18 @@ class RobotContainer:
 
     def resetHeading(self):
         self.drivetrain.seed_field_centric()
+
+    def getAutonomousCommand(self, selected: str) -> commands2.Command:
+        from autos import FollowTrajectory
+        return FollowTrajectory (self.drivetrain,
+                                 self.intake,
+                                 selected,
+                                 is_red_alliance = self.isRedAlliance())
+    
+    def isRedAlliance(self):
+        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
     
     def _registerTelemetery (self):
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
         )
-
-    def getAutonomousCommand(self, selected_traj_file: str) -> commands2.Command:
-        """Use this to pass the autonomous command to the main {@link Robot} class.
-
-        :returns: the command to run in autonomous
-        """
-        return AutonomousCommand(self.drivetrain, 
-                                 self.intake, 
-                                 selected_traj_file, 
-                                 is_red_alliance=self.isRedAlliance())

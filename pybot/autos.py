@@ -1,8 +1,12 @@
+import os
+
 import commands2
 import wpilib
 import choreo
 
-class AutonomousCommand(commands2.Command):
+DEFAULT_TRAJECTORY = 'outwayred'
+
+class FollowTrajectory(commands2.Command):
     def __init__(self, drivetrain, intake, traj, is_red_alliance):
         """
         Initializes the AutonomousCommand.
@@ -81,3 +85,17 @@ class AutonomousCommand(commands2.Command):
         Returns true when the command should end.
         """
         return False
+
+def createChooser() -> wpilib.SendableChooser:
+    traj_dir = f"{wpilib.getOperatingDirectory()}/deploy/choreo"
+    traj_files = []
+    for f in os.listdir (traj_dir):
+        if f.endswith('.traj'):
+            traj_files.append (f)
+    
+    chooser = wpilib.SendableChooser()
+    for traj_file in traj_files:
+        chooser.addOption (traj_file.removesuffix ('.traj'),
+                                traj_file.removesuffix ('.traj'))        
+    chooser.setDefaultOption (DEFAULT_TRAJECTORY, DEFAULT_TRAJECTORY)
+    return chooser

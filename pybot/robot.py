@@ -7,9 +7,10 @@
 
 import os, typing
 import wpilib, commands2
+
+import autos
 from robotcontainer import RobotContainer
 
-AUTOMODE_DEFAULT = 'outwayred'
 LATENCY_SECONDS = 0.02
 
 class MyRobot(wpilib.TimedRobot):
@@ -32,18 +33,7 @@ class MyRobot(wpilib.TimedRobot):
         self.registerTrajectories()
 
     def registerTrajectories(self) -> None:
-        traj_dir = f"{wpilib.getOperatingDirectory()}/deploy/choreo"
-        traj_files = []
-        for f in os.listdir (traj_dir):
-            if f.endswith('.traj'):
-                traj_files.append (f)
-        
-        self.chooser = wpilib.SendableChooser()
-        for traj_file in traj_files:
-            self.chooser.addOption (traj_file.removesuffix ('.traj'),
-                                    traj_file.removesuffix ('.traj'))        
-        self.chooser.setDefaultOption (AUTOMODE_DEFAULT, AUTOMODE_DEFAULT)
-
+        self.chooser = autos.createChooser()
         wpilib.SmartDashboard.putData ('Trajectory Files', self.chooser)
 
     def selectedTrajectory(self) -> str:
@@ -70,6 +60,7 @@ class MyRobot(wpilib.TimedRobot):
     def teleopInit(self) -> None:
         if self.autonomousCommand:
            self.autonomousCommand.cancel()
+           self.autonomousCommand = None
 
         self.container.configureButtonBindings()
 
