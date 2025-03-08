@@ -17,10 +17,12 @@ from lifter import Lifter  # Import the Lifter class
 import wpilib
 from autolink import AutonomousCommand
 import logging
+import math
+from wpimath.controller import PIDController
+from wpimath.kinematics import ChassisSpeeds
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
-
 
 class RobotContainer:
     """
@@ -32,10 +34,10 @@ class RobotContainer:
 
     def __init__(self) -> None:
         self._max_speed = (
-            TunerConstants.speed_at_12_volts * .6
+            TunerConstants.speed_at_12_volts * 0.72
         )  # speed_at_12_volts desired top speed
         self._max_angular_rate = rotationsToRadians(
-            0.75 * .4
+            0.75 * .35
             #maybe limit this rotational
         )  # 3/4 of a rotation per second max angular velocity
 
@@ -44,10 +46,12 @@ class RobotContainer:
 
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
-            swerve.requests.FieldCentric()
-            .with_deadband(self._max_speed * 0.1)
+            # NOTE: Using FieldCentric prevents the use of the PIDController because the chassis speeds are of the
+            #       robot. FieldCentric focus on the field so the desired direction is a different unit of measure than y(t)
+            swerve.requests.RobotCentric()
+            .with_deadband(self._max_speed / 10)
             .with_rotational_deadband(
-                self._max_angular_rate * 0.1
+                math.pi / 16
             )  # Add a 10% deadband
             .with_drive_request_type(
                 swerve.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE
@@ -72,74 +76,82 @@ class RobotContainer:
         """
         Setup which buttons do what.
         """
-        if not hasattr (self, '_joystick') or self._joystick == None:
-            self._joystick = commands2.button.CommandXboxController (0)
+        if not hasattr(self, '_joystick') or self._joystick is None:
+            self._joystick = commands2.button.CommandXboxController(0)
 
         # Cache the multiplier
         self._driveMultiplier = -1.0 if self.isRedAlliance() else 1.0
-        
+
         # Note that X is defined as forward according to WPILib convention,
         # and Y is defined as to the left according to WPILib convention.
-        self.drivetrain.setDefaultCommand(
-            # Drivetrain will execute this command periodically
-            self.drivetrain.apply_request(
-                lambda: (
-                    self._drive.with_velocity_x(
-                        self._driveMultiplier * self._joystick.getLeftY() * self._max_speed
-                    )  # Drive forward with negative Y (forward)
-                    .with_velocity_y(
-                        self._driveMultiplier * self._joystick.getLeftX() * self._max_speed
-                    )  # Drive left with negative X (left)
-                    .with_rotational_rate(
-                        self._driveMultiplier * self._joystick.getRightX() * self._max_angular_rate
-                    )  # Drive counterclockwise with negative X (left)
-                )
-            )
-        )
+        floor_threshold = 0.15
+        def floor(value):
+            if (math.fabs(value) < floor_threshold):
+                return 0
+            
+            return value
         
+        controller_vx = PIDController(0.5, 0.1, 0.0)
+        controller_vy = PIDController(0.5, 0.1, 0.0)
+        controller_omega = PIDController(0.5, 0.1, 0.0)
+        def calculate_velocity_x():
+            vx_current = self.drivetrain.get_chassis_speed().vx
+            vx_target = floor(self._joystick.getLeftX()) * self._max_speed
+
+            return vx_current + controller_vx.calculate(vx_current, vx_target)
+        def calculate_velocity_y():
+            vy_current = self.drivetrain.get_chassis_speed().vy
+            vy_target = floor(self._joystick.getLeftY()) * self._max_speed
+
+            return vy_current + controller_vy.calculate(vy_current, vy_target)
+        def calculate_rotational_rate():
+            omega_current = self.drivetrain.get_chassis_speed().omega
+            omega_target = floor(self._joystick.getRightX()) * self._max_angular_rate
+
+            return omega_current + controller_omega.calculate(omega_current, omega_target)
+
+        def calculate_request():
+            vx = calculate_velocity_x()
+            vy = calculate_velocity_y()
+            rot = calculate_rotational_rate()
+
+            return (self._drive
+                # Drive left with negative X (left) and left trigger for acceleration
+                .with_velocity_x(vx)
+                # Drive forward with negative Y (forward) and left trigger for acceleration
+                .with_velocity_y(vy)
+                # Drive counterclockwise with negative X (left)
+                .with_rotational_rate(rot))
+            
+        # Drivetrain will execute this command periodically
+        self.drivetrain.setDefaultCommand(self.drivetrain.apply_request(calculate_request))
+
+        print(f"Post Speeds: {self.drivetrain.get_chassis_speed()}")
         # reset the field-centric heading on left bumper press
         self._joystick.x().onTrue(
             self.drivetrain.runOnce(lambda: self.resetHeading())
         )
-       
+
         # Configure buttons for elevator control
         self._joystick.y().whileTrue(commands2.cmd.startEnd(
-           lambda: self.elevator.moveUp(),
-           lambda: self.elevator.stop()
+            lambda: self.elevator.moveUp(),
+            lambda: self.elevator.stop()
         ))
 
         self._joystick.a().whileTrue(commands2.cmd.startEnd(
-           lambda: self.elevator.moveDown(),
-           lambda: self.elevator.stop()
+            lambda: self.elevator.moveDown(),
+            lambda: self.elevator.stop()
         ))
-    
-        
+
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
-
-        # Set the rumble when the 'X' button is pressed
-        #self._joystick.x().whileTrue(commands2.cmd.startEnd(
-        #    lambda: self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kBothRumble, 1),
-        #    lambda: self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kBothRumble, 0)
-        #))
-        #if wpilib.DriverStation.isTeleop() and wpilib.DriverStation.getMatchTime() <= 15:
-        #    commands2.cmd.run(
-        #    lambda: self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kRightRumble, 1),
-        #    lambda: self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kRightRumble, 0),
-        #    lambda: self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kLeftRumble, 1),
-        #    lambda: self._joystick.setRumble(wpilib.interfaces.GenericHID.RumbleType.kLeftRumble, 0)
-        #)
-
-        # Log elevator positions when the 'B' button is pressed
-        #self._joystick.b().whileTrue(commands2.cmd.run(lambda: logging.info(self.elevator.get_positions()), self.elevator))
 
         # Configure buttons for intake control
         self._joystick.rightBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(1),
+            lambda: self.intake.setMotor(.8),
             lambda: self.intake.stop()
         ))
 
         # Theres a chance red vs blue has changed, so do this now.
-        self.resetHeading()
 
     def resetHeading(self):
         self.drivetrain.seed_field_centric()

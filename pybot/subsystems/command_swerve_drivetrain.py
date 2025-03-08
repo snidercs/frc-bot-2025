@@ -151,9 +151,10 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         self._last_sim_time: units.second = 0.0
 
         # Add PID controllers
-        self.x_controller = PIDController(15.0, 1.0, 1.0)
-        self.y_controller = PIDController(15.0, 1.0, 1.0)
-        self.heading_controller = PIDController(15.0, 1.0, 1.0)
+        # D value needs adjusted, but P value is good
+        self.x_controller = PIDController(1.1, 0.0, 0.05)
+        self.y_controller = PIDController(1.1, 0.0, 0.05)
+        self.heading_controller = PIDController(1.6, 0.0, 0.05)
         self.heading_controller.enableContinuousInput(-math.pi, math.pi)
 
         self._has_applied_operator_perspective = False
@@ -350,7 +351,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
 
         # Create field-centric request with proper enum references
         request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
-            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True) \
             .with_wheel_force_feedforwards_x(sample.fx) \
@@ -364,7 +365,16 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         """
         speeds = ChassisSpeeds(0.0, 0.0, 0.0)
         request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
-            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True)
         self.set_control(request)
+
+    def get_chassis_speed(self) -> ChassisSpeeds:
+        """
+        Gets the current chassis speeds of the robot.
+
+        :returns: The current chassis speeds of the robot.
+        :rtype: ChassisSpeeds
+        """
+        return super().get_state().speeds

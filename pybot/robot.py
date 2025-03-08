@@ -20,7 +20,14 @@ class MyRobot(wpilib.TimedRobot):
         super().__init__(LATENCY_SECONDS)
     
     def robotInit(self) -> None:
+        print('Robot Init')
+
         self.container = RobotContainer()
+
+        if (self.isSimulation()):
+            print('Entering Simulation...')
+            self.addPeriodic(lambda: self.container.drivetrain.update_sim_state(0.02, 12), 0.02, 0.02)
+
         self.scheduler = commands2.CommandScheduler.getInstance()
         self.registerTrajectories()
 
@@ -72,8 +79,8 @@ class MyRobot(wpilib.TimedRobot):
     def testInit(self) -> None:
         self.scheduler.cancelAll()
 
-    def simulationInit(self) -> None:
+    def _simulationInit(self) -> None:
         pass
 
-    def simulationPeriodic(self) -> None:
+    def _simulationPeriodic(self) -> None:
         pass
