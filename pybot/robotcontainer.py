@@ -31,18 +31,14 @@ class RobotContainer:
 
     def __init__(self) -> None:
         self._max_speed = (
-            TunerConstants.speed_at_12_volts * .72
+            TunerConstants.speed_at_12_volts * .35
         )  # speed_at_12_volts desired top speed
         self._max_angular_rate = rotationsToRadians(
-            0.75 * .35
-            #maybe limit this rotational
-        )  # 3/4 of a rotation per second max angular velocity
-
-        # Drive Inversion multiplier
-        self._driveMultiplier = -1.0
+            TunerConstants.angular_at_12_volts * .1
+        )
 
         # Setting up bindings for necessary control of the swerve drive platform
-        self._deadband = 0.05 # The input deadband
+        self._deadband = 0.1 # The input deadband
         self._exponent = 3.0 # Exponential factor (try 2, 2.5, or 3)
 
         self._drive = (
@@ -117,13 +113,15 @@ class RobotContainer:
 
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
-        # Configure buttons for intake control
-        self._joystick.rightBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(.8),
+        self._joystick.leftBumper().whileTrue(commands2.cmd.startEnd(
+            lambda: self.intake.setMotor(.3),
             lambda: self.intake.stop()
         ))
-
-        # Theres a chance red vs blue has changed, so do this now.
+        # Configure buttons for intake control
+        self._joystick.rightBumper().whileTrue(commands2.cmd.startEnd(
+            lambda: self.intake.setMotor(1),
+            lambda: self.intake.stop()
+        ))
 
     def resetHeading(self):
         self.drivetrain.seed_field_centric()

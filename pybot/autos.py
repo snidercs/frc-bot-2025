@@ -1,5 +1,4 @@
 import os
-
 import commands2
 import wpilib
 import choreo
@@ -75,10 +74,12 @@ class FollowTrajectory(commands2.Command):
         # Implement the actions to be triggered by the event
         if event == "CoralPlace":
             # Perform some action
-            self.intake.setMotor(0.2)
+            self.intake.setMotor(1)
         elif event == "CoralIntake":
             # Perform another action
-            self.intake.setMotor(-0.2)
+            self.intake.setMotor(0.3)
+        elif event == "ResetHeading":
+            self.drivetrain.seed_field_centric()
 
     def isFinished(self):
         """
