@@ -89,8 +89,6 @@ class RobotContainer:
             x1 = mag * math.cos(theta)
             y1 = mag * math.sin(theta)
 
-            print('0: %f, %f    1: %f %f' % (x0, y0, x1, y1))
-
             return (x1, y1)
 
         def applyRequest():
