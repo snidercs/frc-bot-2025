@@ -17,6 +17,8 @@ from lifter import Lifter  # Import the Lifter class
 import wpilib
 import logging
 
+import math
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -81,24 +83,32 @@ class RobotContainer:
         # Cache the multiplier
         self._driveMultiplier = -1.0 if self.isRedAlliance() else 1.0
 
+        def calculateJoystick():
+            x0 = self._joystick.getLeftX()
+            y0 = self._joystick.getLeftY()
+
+            mag = self.apply_exponential(math.sqrt((x0 * x0) + (y0 * y0)), self._deadband, self._exponent) * self._max_speed
+            theta = math.atan2(y0, x0)
+
+            x1 = mag * math.cos(theta)
+            y1 = mag * math.sin(theta)
+
+            print('0: %f, %f    1: %f %f' % (x0, y0, x1, y1))
+
+            return (x1, y1)
+
+        def applyRequest():
+            (new_vx, new_vy) = calculateJoystick()
+
+            return (self._drive.with_velocity_x(self._driveMultiplier * new_vy)  # Drive forward with negative Y (forward)
+            .with_velocity_y(self._driveMultiplier * new_vx)  # Drive left with negative X (left)
+            .with_rotational_rate(
+                self._driveMultiplier * self.apply_exponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate
+            ))  # Drive counterclockwise with negative X (left)
+
         # Note that X is defined as forward according to WPILib convention,
         # and Y is defined as to the left according to WPILib convention.
-        self.drivetrain.setDefaultCommand(
-            # Drivetrain will execute this command periodically
-            self.drivetrain.apply_request(
-                lambda: (
-                    self._drive.with_velocity_x(
-                        self._driveMultiplier * self.apply_exponential(self._joystick.getLeftY(), self._deadband, self._exponent) * self._max_speed
-                    )  # Drive forward with negative Y (forward)
-                    .with_velocity_y(
-                        self._driveMultiplier * self.apply_exponential(self._joystick.getLeftX(), self._deadband, self._exponent) * self._max_speed
-                    )  # Drive left with negative X (left)
-                    .with_rotational_rate(
-                        self._driveMultiplier * self.apply_exponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate
-                    )  # Drive counterclockwise with negative X (left)
-                )
-            )
-        )
+        self.drivetrain.setDefaultCommand(self.drivetrain.apply_request(applyRequest))
         # reset the field-centric heading on left bumper press
         self._joystick.x().onTrue(
             self.drivetrain.runOnce(lambda: self.resetHeading())
