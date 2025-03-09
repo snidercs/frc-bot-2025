@@ -41,9 +41,17 @@ def main():
             # skip the rest of the current iteration
             continue
 
-        # Put a rectangle on the image
-        # TODO: I don't see a rectangle in the feed -MRF
-        cv2.rectangle (mat, (100, 100), (400, 400), (255, 255, 255), 5)
+        # Coordinates for the crosshair
+        crosshair_x = 885 
+        crosshair_y = 675
+
+        # Define the length of the crosshair lines
+        line_length = 50
+
+        # Draw horizontal line
+        cv2.line(mat, (crosshair_x - line_length, crosshair_y), (crosshair_x + line_length, crosshair_y), (255, 255, 255), 2)
+        # Draw vertical line
+        cv2.line(mat, (crosshair_x, crosshair_y - line_length), (crosshair_x, crosshair_y + line_length), (255, 255, 255), 2)
 
         # Give the output stream a new image to display
         outputStream.putFrame (mat)
