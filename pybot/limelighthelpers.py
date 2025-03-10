@@ -1,12 +1,12 @@
 import json
 import requests
-from networktables import NetworkTables
+import ntcore
 from wpimath.geometry import Pose2d, Pose3d, Rotation2d, Rotation3d, Translation2d, Translation3d
-from wpimath.util import Units
+from wpimath import units
 from typing import List, Dict, Optional
 
 class LimelightHelpers:
-    double_array_entries: Dict[str, NetworkTables.DoubleArrayEntry] = {}
+    double_array_entries: Dict[str, ntcore.NetworkTable] = {}
 
     @staticmethod
     def sanitize_name(name: str) -> str:
@@ -18,7 +18,7 @@ class LimelightHelpers:
             return Pose3d()
         return Pose3d(
             Translation3d(data[0], data[1], data[2]),
-            Rotation3d(Units.degreesToRadians(data[3]), Units.degreesToRadians(data[4]), Units.degreesToRadians(data[5]))
+            Rotation3d(units.degreesToRadians(data[3]), units.degreesToRadians(data[4]), units.degreesToRadians(data[5]))
         )
 
     @staticmethod
@@ -27,7 +27,7 @@ class LimelightHelpers:
             return Pose2d()
         return Pose2d(
             Translation2d(data[0], data[1]),
-            Rotation2d(Units.degreesToRadians(data[5]))
+            Rotation2d(units.degreesToRadians(data[5]))
         )
 
     @staticmethod
@@ -36,9 +36,9 @@ class LimelightHelpers:
             pose.translation().x(),
             pose.translation().y(),
             pose.translation().z(),
-            Units.radiansToDegrees(pose.rotation().x()),
-            Units.radiansToDegrees(pose.rotation().y()),
-            Units.radiansToDegrees(pose.rotation().z())
+            units.radiansToDegrees(pose.rotation().x()),
+            units.radiansToDegrees(pose.rotation().y()),
+            units.radiansToDegrees(pose.rotation().z())
         ]
 
     @staticmethod
@@ -49,7 +49,7 @@ class LimelightHelpers:
             0,
             0,
             0,
-            Units.radiansToDegrees(pose.rotation().radians())
+            units.radiansToDegrees(pose.rotation().radians())
         ]
 
     @staticmethod
@@ -57,15 +57,15 @@ class LimelightHelpers:
         return data[position] if len(data) > position else 0
 
     @staticmethod
-    def get_limelight_nt_table(table_name: str) -> NetworkTables.NetworkTable:
-        return NetworkTables.getTable(LimelightHelpers.sanitize_name(table_name))
+    def get_limelight_nt_table(table_name: str) -> ntcore.NetworkTable:
+        return ntcore.getTable(LimelightHelpers.sanitize_name(table_name))
 
     @staticmethod
-    def get_limelight_nt_table_entry(table_name: str, entry_name: str) -> NetworkTables.NetworkTableEntry:
+    def get_limelight_nt_table_entry(table_name: str, entry_name: str) -> ntcore.NetworkTableEntry:
         return LimelightHelpers.get_limelight_nt_table(table_name).getEntry(entry_name)
 
     @staticmethod
-    def get_limelight_double_array_entry(table_name: str, entry_name: str) -> NetworkTables.DoubleArrayEntry:
+    def get_limelight_double_array_entry(table_name: str, entry_name: str) -> ntcore.DoubleArrayEntry:
         key = f"{table_name}/{entry_name}"
         if key not in LimelightHelpers.double_array_entries:
             table = LimelightHelpers.get_limelight_nt_table(table_name)
@@ -355,7 +355,7 @@ class LimelightHelpers:
         entries = [yaw, yaw_rate, pitch, pitch_rate, roll, roll_rate]
         LimelightHelpers.set_limelight_nt_double_array(limelight_name, "robot_orientation_set", entries)
         if flush:
-            NetworkTables.flush()
+            ntcore.flush()
 
     @staticmethod
     def set_imu_mode(limelight_name: str, mode: int) -> None:

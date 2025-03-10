@@ -3,7 +3,7 @@ import logging
 import requests
 import limelight
 import limelightresults
-from networktables import NetworkTables
+import ntcore
 
 class LimelightSubsystem(Subsystem):
     """
@@ -89,7 +89,7 @@ class LimelightSubsystem(Subsystem):
         :param limelight_name: The name of the Limelight NetworkTable ("limelight" if default).
         :return: ID of the primary tag or -1 if none in view.
         """
-        limelight_table = NetworkTables.getTable(limelight_name)
+        limelight_table = ntcore.getTable(limelight_name)
         tag_id = limelight_table.getEntry("tid").getDouble(-1.0)
         return int(tag_id)
 
@@ -102,6 +102,6 @@ class LimelightSubsystem(Subsystem):
         :param limelight_name: The name of the Limelight NetworkTable ("limelight" if default).
         :return: True if connected, False otherwise.
         """
-        limelight_table = NetworkTables.getTable(limelight_name)
+        limelight_table = ntcore.getTable(limelight_name)
         latency = limelight_table.getEntry("tl").getDouble(0.0)
         return latency > 0.01

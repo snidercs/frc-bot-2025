@@ -10,12 +10,13 @@ import commands2.cmd
 from commands2.sysid import SysIdRoutine
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
-
+import limelighthelpers
 from phoenix6 import swerve, SignalLogger
 from wpimath.units import rotationsToRadians
 from lifter import Lifter  # Import the Lifter class
 import wpilib
 import logging
+from limelightinit import LimelightSubsystem  # Import the LimelightSubsystem class
 
 import math
 
@@ -65,6 +66,9 @@ class RobotContainer:
         # Initialize the intake with motor IDs
         self.intake = Lifter(18, 22)
         # making it closer to 1 will make the decay slower and smoother.
+
+        # Initialize the Limelight subsystem
+        self.limelight_subsystem = LimelightSubsystem()
 
         # Setup telemetry
         self._registerTelemetery()
@@ -130,6 +134,29 @@ class RobotContainer:
             lambda: self.intake.setMotor(1),
             lambda: self.intake.stop()
         ))
+
+
+        # Configure button to call PointAtCoordinateCommand with Limelight data
+        self._joystick.b().onTrue(
+            commands2.cmd.runOnce(self.create_point_at_coordinate_command, self.drivetrain)
+        )
+
+    def create_point_at_coordinate_command(self):
+        # Get the primary fiducial ID from the Limelight
+        fiducial_id = limelighthelpers.get_primary_fiducial_id("limelight-bottom")
+        if fiducial_id == -1:
+            print("No fiducial detected")
+            return
+
+        # Get the target pose from the Limelight
+        target_pose = limelighthelpers.get_target_pose(fiducial_id)
+        if target_pose is None:
+            print("No target pose available")
+            return
+
+        # Create and return the PointAtCoordinateCommand
+        return PointAtCoordinateCommand(self.drivetrain, self._joystick, target_pose)
+
 
     def resetHeading(self):
         self.drivetrain.seed_field_centric()
