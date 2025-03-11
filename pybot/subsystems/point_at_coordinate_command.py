@@ -1,15 +1,14 @@
-from commands2 import CommandBase
+from commands2 import Command
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d
-from subsystems.swerve import Swerve
 
 import math
 
-class PointAtCoordinateCommand(CommandBase):
+class PointAtCoordinateCommand(Command):
 
-    def __init__(self, swerve: Swerve, target_pose: Pose2d):
+    def __init__(self, drivetrain, target_pose: Pose2d):
         super().__init__()
-        self.swerve = swerve
+        self.drivetrain = drivetrain
         self.target_pose = target_pose
 
         # Create and configure our heading PID. We only use P here, but you may want D or I.
@@ -17,7 +16,7 @@ class PointAtCoordinateCommand(CommandBase):
         # Enable continuous input so angles wrap at ±π
         self.heading_pid.enableContinuousInput(-math.pi, math.pi)
 
-        self.addRequirements(swerve)
+        self.addRequirements(drivetrain)
 
     def initialize(self):
         print(f"[PointAtCoordinate] Target: {self.target_pose}")
@@ -25,12 +24,14 @@ class PointAtCoordinateCommand(CommandBase):
         self.heading_pid.reset()
 
     def execute(self):
+        print("IVE BEEN CALLED")
         # 1) Driver’s XY input
-        forward = self.controls.getThrottle() * self.kMaxLinearSpeed
-        strafe = self.controls.getStrafe() * self.kMaxLinearSpeed
+        joyvalues = self.drivetrain.calculateJoystick()
+        forward = joyvalues[0]
+        strafe = joyvalues[1]
 
         # 2) Current robot pose from swerve
-        current_pose = self.swerve.getState().pose
+        current_pose = self.drivetrain.get_pose()
 
         # 3) Compute angle from robot to target
         heading_to_target = self.compute_heading_to_target(current_pose, self.target_pose)
@@ -43,12 +44,12 @@ class PointAtCoordinateCommand(CommandBase):
         turn_command = self.heading_pid.calculate(current_heading)
 
         # 6) Build a SwerveRequest for field-centric velocity
-        request = swerve.requests.ApplyFieldSpeeds().with_speeds(
+        request = self.drivetrain.requests.ApplyFieldSpeeds().with_speeds(
             ChassisSpeeds(forward, strafe, turn_command)
         ).with_drive_request_type(
-            swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY
+            self.drivetrain.swerve_module.SwerveModule.DriveRequestType.VELOCITY
         ).with_steer_request_type(
-            swerve.swerve_module.SwerveModule.SteerRequestType.POSITION
+            self.drivetrain.swerve_module.SwerveModule.SteerRequestType.POSITION
         ).with_desaturate_wheel_speeds(True)
 
         # 7) Send to swerve

@@ -105,3 +105,26 @@ class LimelightSubsystem(Subsystem):
         limelight_table = ntcore.getTable(limelight_name)
         latency = limelight_table.getEntry("tl").getDouble(0.0)
         return latency > 0.01
+
+    def get_target_pose(self, fiducial_id: int):
+        """
+        Returns the target pose for the given fiducial ID.
+        
+        :param fiducial_id: The ID of the fiducial.
+        :return: The target pose or None if not found.
+        """
+        if self.limelight1 is not None:
+            result1 = self.limelight1.get_results()
+            parsed_result1 = limelightresults.parse_results(result1)
+            for fiducial_result in parsed_result1.fiducialResults:
+                if fiducial_result.fiducial_id == fiducial_id:
+                    return fiducial_result.target_pose_camera_space
+
+        if self.limelight2 is not None:
+            result2 = self.limelight2.get_results()
+            parsed_result2 = limelightresults.parse_results(result2)
+            for fiducial_result in parsed_result2.fiducialResults:
+                if fiducial_result.fiducial_id == fiducial_id:
+                    return fiducial_result.target_pose_camera_space
+
+        return None

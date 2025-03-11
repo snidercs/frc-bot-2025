@@ -10,16 +10,16 @@ import commands2.cmd
 from commands2.sysid import SysIdRoutine
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
-import limelighthelpers
 from phoenix6 import swerve, SignalLogger
 from wpimath.units import rotationsToRadians
 from lifter import Lifter  # Import the Lifter class
 import wpilib
 import logging
 from limelightinit import LimelightSubsystem  # Import the LimelightSubsystem class
-
+from subsystems.point_at_coordinate_command import PointAtCoordinateCommand
 import math
-
+import limelightresults
+import limelight
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -142,21 +142,35 @@ class RobotContainer:
         )
 
     def create_point_at_coordinate_command(self):
-        # Get the primary fiducial ID from the Limelight
-        fiducial_id = limelighthelpers.get_primary_fiducial_id("limelight-bottom")
-        if fiducial_id == -1:
-            print("No fiducial detected")
-            return
+        # Discover Limelight devices
+        discovered_limelights = limelight.discover_limelights(debug=True)
+        if not discovered_limelights:
+            logging.warning("No Limelight devices found")
+            return commands2.cmd.none()
 
-        # Get the target pose from the Limelight
-        target_pose = limelighthelpers.get_target_pose(fiducial_id)
-        if target_pose is None:
-            print("No target pose available")
-            return
+        # Connect to the first discovered Limelight device
+        limelight_address = discovered_limelights[0]
+        ll = limelight.Limelight(limelight_address)
+
+        # Get the latest results
+        result = ll.get_latest_results()
+        parsed_result = limelightresults.parse_results(result)
+
+        if parsed_result is None or not parsed_result.fiducialResults:
+            logging.warning("No fiducial detected or no valid results")
+            return commands2.cmd.none()
+
+        # Get the primary fiducial ID and target pose
+        fiducial_result = parsed_result.fiducialResults[0]
+        fiducial_id = fiducial_result.fiducial_id
+        target_pose = fiducial_result.target_pose_camera_space
+
+        if fiducial_id == -1 or target_pose is None:
+            logging.warning("No valid fiducial ID or target pose")
+            return commands2.cmd.none()
 
         # Create and return the PointAtCoordinateCommand
-        return PointAtCoordinateCommand(self.drivetrain, self._joystick, target_pose)
-
+        return PointAtCoordinateCommand(self.drivetrain, target_pose)
 
     def resetHeading(self):
         self.drivetrain.seed_field_centric()
