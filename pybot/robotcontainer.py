@@ -3,7 +3,7 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
-
+from wpimath.geometry import Pose2d, Rotation2d
 import commands2
 import commands2.button
 import commands2.cmd
@@ -16,10 +16,9 @@ from lifter import Lifter  # Import the Lifter class
 import wpilib
 import logging
 from limelightinit import LimelightSubsystem  # Import the LimelightSubsystem class
-from subsystems.point_at_coordinate_command import PointAtCoordinateCommand
 import math
-import limelightresults
-import limelight
+from wpimath.controller import PIDController
+from wpimath.kinematics import ChassisSpeeds
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -72,18 +71,8 @@ class RobotContainer:
 
         # Setup telemetry
         self._registerTelemetery()
-
-    def configureButtonBindings(self) -> None:
-        """
-        Setup which buttons do what.
-        """
-        if not hasattr(self, '_joystick') or self._joystick is None:
-            self._joystick = commands2.button.CommandXboxController(0)
-
-        # Cache the multiplier
-        self._driveMultiplier = -1.0 if self.isRedAlliance() else 1.0
-
-        def calculateJoystick():
+    
+    def calculateJoystick(self):
             x0 = self._joystick.getLeftX()
             y0 = self._joystick.getLeftY()
 
@@ -95,8 +84,20 @@ class RobotContainer:
 
             return (x1, y1)
 
+    def configureButtonBindings(self) -> None:
+        """
+        Setup which buttons do what.
+        """
+        if not hasattr(self, '_joystick') or self._joystick is None:
+            self._joystick = commands2.button.CommandXboxController(0)
+
+        # Cache the multiplier
+        self._driveMultiplier = -1.0 if self.isRedAlliance() else 1.0
+
+        
+
         def applyRequest():
-            (new_vx, new_vy) = calculateJoystick()
+            (new_vx, new_vy) = self.calculateJoystick()
 
             return (self._drive.with_velocity_x(self._driveMultiplier * new_vy)  # Drive forward with negative Y (forward)
             .with_velocity_y(self._driveMultiplier * new_vx)  # Drive left with negative X (left)
@@ -135,42 +136,73 @@ class RobotContainer:
             lambda: self.intake.stop()
         ))
 
-
-        # Configure button to call PointAtCoordinateCommand with Limelight data
-        self._joystick.b().onTrue(
-            commands2.cmd.runOnce(self.create_point_at_coordinate_command, self.drivetrain)
+        #if self.limelight_subsystem.limelight1 is not None:
+            # Configure button to call PointAtCoordinateCommand with Limelight data
+        self._joystick.b().whileTrue(
+            commands2.cmd.run(self.create_point_at_coordinate_request(), self.drivetrain)
         )
 
-    def create_point_at_coordinate_command(self):
-        # Discover Limelight devices
-        discovered_limelights = limelight.discover_limelights(debug=True)
-        if not discovered_limelights:
-            logging.warning("No Limelight devices found")
-            return commands2.cmd.none()
+    def create_point_at_coordinate_request(self):
+        dummy_pose = True
+        # Use the LimelightSubsystem to get the primary fiducial ID and target pose
+        if not dummy_pose:
+            if self.limelight_subsystem.limelight1 is None:
+                logging.warning("Limelight1 is not initialized")
+                return commands2.cmd.none()
+            else:
+                fiducial_id = self.limelight_subsystem.get_primary_fiducial_id(self.limelight_subsystem.limelight1)
+                target_pose = self.limelight_subsystem.get_target_pose(fiducial_id)
+                if fiducial_id == -1 or target_pose is None:
+                    logging.warning("No valid fiducial ID or target pose")
+                    return commands2.cmd.none()
 
-        # Connect to the first discovered Limelight device
-        limelight_address = discovered_limelights[0]
-        ll = limelight.Limelight(limelight_address)
+        # Create and configure our heading PID. We only use P here, but you may want D or I.
+        heading_pid = PIDController(1.6, 0.0, 0.05)
+        # Enable continuous input so angles wrap at ±π
+        heading_pid.enableContinuousInput(-math.pi, math.pi)
 
-        # Get the latest results
-        result = ll.get_latest_results()
-        parsed_result = limelightresults.parse_results(result)
+        def apply_request():
+            # 1) Driver’s XY input
+            joyvalues = self.calculateJoystick()
+            forward = joyvalues[1]
+            strafe = joyvalues[0]
 
-        if parsed_result is None or not parsed_result.fiducialResults:
-            logging.warning("No fiducial detected or no valid results")
-            return commands2.cmd.none()
+            # 2) Current robot pose from swerve
+            current_pose = self.drivetrain.get_pose()
 
-        # Get the primary fiducial ID and target pose
-        fiducial_result = parsed_result.fiducialResults[0]
-        fiducial_id = fiducial_result.fiducial_id
-        target_pose = fiducial_result.target_pose_camera_space
+            if dummy_pose:
+                heading_to_target = self.compute_heading_to_target(current_pose, Pose2d(2, 1, 1/2))
 
-        if fiducial_id == -1 or target_pose is None:
-            logging.warning("No valid fiducial ID or target pose")
-            return commands2.cmd.none()
+            else:
+            # 3) Compute angle from robot to target
+                heading_to_target = self.compute_heading_to_target(current_pose, Pose2d(target_pose[0], target_pose[1], target_pose[5]))
+            
+            current_heading = current_pose.rotation().radians()
 
-        # Create and return the PointAtCoordinateCommand
-        return PointAtCoordinateCommand(self.drivetrain, target_pose)
+
+            # 4) Update the heading PID setpoint each iteration
+            heading_pid.setSetpoint(heading_to_target)
+
+            # 5) Calculate turn_command = PID output
+            turn_command = heading_pid.calculate(current_heading)
+
+            # 6) Build a SwerveRequest for field-centric velocity
+            request = swerve.requests.ApplyFieldSpeeds().with_speeds(
+                ChassisSpeeds(forward, strafe, turn_command)
+            ).with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY \
+            ).with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION \
+            ).with_desaturate_wheel_speeds(True)
+
+            # 7) Send to swerve
+            self.drivetrain.set_control(request)
+
+        return apply_request
+
+    @staticmethod
+    def compute_heading_to_target(current_pose: Pose2d, target_pose: Pose2d) -> float:
+        dx = target_pose.X() - current_pose.X()
+        dy = target_pose.Y() - current_pose.Y()
+        return math.atan2(dy, dx)
 
     def resetHeading(self):
         self.drivetrain.seed_field_centric()
@@ -210,10 +242,10 @@ class RobotContainer:
         magnitude = abs(input)
 
         # 3. Scale from [deadband .. 1] to [0 .. 1]
-        scaled = (magnitude - deadband) / (1.0 - deadband)  # in [0..1]
+        scaled = (magnitude - deadband) / (1.0 - deadband)
 
-        # 4. Apply exponential. e.g. exponent=2 => x^2, exponent=3 => x^3
-        curved = scaled ** exponent
+        # 4. Apply the exponential curve
+        exponentiated = math.pow(scaled, exponent)
 
-        # 5. Reapply sign to restore forward/backward
-        return sign * curved
+        # 5. Restore the sign and return the result
+        return sign * exponentiated
