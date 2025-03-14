@@ -11,7 +11,7 @@ import wpilib, commands2
 import autos
 from robotcontainer import RobotContainer
 
-LATENCY_SECONDS = 0.02
+LATENCY_SECONDS = 0.03
 
 class MyRobot(wpilib.TimedRobot):
     autonomousCommand: typing.Optional[commands2.Command] = None
@@ -24,7 +24,6 @@ class MyRobot(wpilib.TimedRobot):
         self.container = RobotContainer()
         self.scheduler = commands2.CommandScheduler.getInstance()
         self.registerTrajectories()
-        wpilib.CameraServer.launch ('vision.py:main')
 
     def registerTrajectories(self) -> None:
         self.chooser = autos.createChooser()

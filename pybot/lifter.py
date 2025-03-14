@@ -16,36 +16,14 @@ class Lifter:
         self.follower.setNeutralMode(NeutralModeValue.BRAKE)
 
     def moveDown(self):
-        try:
-            if self.motor.get_reverse_limit() == 0:
-                logger.warning("Reverse limit reached; cannot move down")
-                self.stop()
-            else:
-                logger.info("Moving down")
-                self.motor.set(-0.2)  # Gentle downward movement
-        except Exception as e:
-            logger.error(f"Error moving down: {e}")
+            self.motor.set(-0.5)  # Gentle downward movement
 
     def moveUp(self):
-        try:
-            if self.motor.get_forward_limit() == 0:
-                logger.warning("Forward limit reached; cannot move up")
-                self.stop()
-            else:
-                logger.info("Moving up")
-                self.motor.set(0.3)  # Upward movement
-        except Exception as e:
-            logger.error(f"Error moving up: {e}")
+            self.motor.set(0.7)  # Upward movement
 
 
     def stop(self):
-        try:
             self.motor.stopMotor()
-        except Exception as e:
-            logger.error(f"Error stopping motor: {e}")
         
     def setMotor(self, value):
-        try:
             self.motor.set(value)
-        except Exception as e:
-            logger.error(f"Error setting motor: {e}")

@@ -369,3 +369,25 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True)
         self.set_control(request)
+
+    def go_to_coordinate(self, target_pose: Pose2d):
+        # Enable continuous input for heading controller
+        self.heading_controller.enableContinuousInput(-math.pi, math.pi)
+
+        # Get current pose from swerve state
+        current_pose = self.get_pose()
+
+        # Calculate the necessary speeds using PID controllers
+        vx = self.x_controller.calculate(current_pose.X(), target_pose.X())
+        vy = self.y_controller.calculate(current_pose.Y(), target_pose.Y())
+        omega = self.heading_controller.calculate(current_pose.rotation().radians(), target_pose.rotation().radians())
+
+        speeds = ChassisSpeeds(vx, vy, omega)
+
+        # Create field-centric request with proper enum references
+        request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
+            .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
+            .with_desaturate_wheel_speeds(True)
+
+        self.set_control(request)
