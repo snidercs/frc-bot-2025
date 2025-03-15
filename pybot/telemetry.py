@@ -4,6 +4,7 @@ from wpilib import Color, Color8Bit, Mechanism2d, MechanismLigament2d, SmartDash
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModulePosition, SwerveModuleState
 import time
+from wpilib.shuffleboard import Shuffleboard
 
 class Telemetry:
     def __init__(self, max_speed: units.meters_per_second):
@@ -18,7 +19,6 @@ class Telemetry:
 
         # What to publish over networktables for telemetry
         self._inst = NetworkTableInstance.getDefault()
-        self._inst.startServer()  # Start NetworkTables server for simulation
 
         # Initialize Field2D object
         self._field = Field2d()
@@ -108,10 +108,6 @@ class Telemetry:
         SignalLogger.write_double(
             "DriveState/OdometryPeriod", state.odometry_period, "seconds"
         )
-
-        # Telemeterize the pose to a Field2d
-        self._field_type_pub.set("Field2d")
-        self._field_pub.set(pose_array)
 
         # Update the Field2d object with the robot's pose
         self._field.setRobotPose(state.pose)
