@@ -137,12 +137,12 @@ class RobotContainer:
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
         self._joystick.leftBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(.3),
+            lambda: self.intake.setMotor(-.3),
             lambda: self.intake.stop()
         ))
         # Configure buttons for intake control
         self._joystick.rightBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(1),
+            lambda: self.intake.setMotor(-1),
             lambda: self.intake.stop()
         ))
 
