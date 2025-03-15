@@ -6,7 +6,7 @@ import choreo
 DEFAULT_TRAJECTORY = 'outwayred'
 
 class FollowTrajectory(commands2.Command):
-    def __init__(self, drivetrain, intake, traj, is_red_alliance):
+    def __init__(self, drivetrain, intake, traj, is_red_alliance) -> None:
         """
         Initializes the AutonomousCommand.
 
@@ -20,12 +20,14 @@ class FollowTrajectory(commands2.Command):
         self.trajectory = choreo.load_swerve_trajectory(traj)
         self.timer = wpilib.Timer()
         self.is_red_alliance = is_red_alliance
-        self.addRequirements(self.drivetrain)  # Ensure the drivetrain is a requirement for this command
         self.laststamp = 0
         self.event_markers = []
         self.triggered_events = set()
 
-    def initialize(self):
+        self.addRequirements(self.drivetrain)  # Ensure the drivetrain is a requirement for this command
+        
+
+    def initialize(self) -> None:
         """
         This autonomous runs the autonomous command selected by your RobotContainer class.
         """
@@ -43,7 +45,7 @@ class FollowTrajectory(commands2.Command):
         # Reset and start the timer when the autonomous period begins
         self.timer.restart()
 
-    def execute(self):
+    def execute(self) -> None:
         """
         This function is called periodically during autonomous.
         """
@@ -67,7 +69,7 @@ class FollowTrajectory(commands2.Command):
                 else:
                     self.drivetrain.stop()
 
-    def triggerEvent(self, event):
+    def triggerEvent(self, event) -> None:
         """
         Trigger the action associated with the event.
         """
@@ -81,7 +83,7 @@ class FollowTrajectory(commands2.Command):
         elif event == "ResetHeading":
             self.drivetrain.seed_field_centric()
 
-    def isFinished(self):
+    def isFinished(self) -> bool:
         """
         Returns true when the command should end.
         """

@@ -24,7 +24,6 @@ class MyRobot(wpilib.TimedRobot):
         self.container = RobotContainer()
         self.scheduler = commands2.CommandScheduler.getInstance()
         self.registerTrajectories()
-        wpilib.CameraServer.launch ('vision.py:main')
 
     def registerTrajectories(self) -> None:
         self.chooser = autos.createChooser()
