@@ -13,19 +13,19 @@ from telemetry import Telemetry
 from wpimath.geometry import Pose2d # , Rotation2d
 from phoenix6 import swerve#, SignalLogger
 from wpimath.units import rotationsToRadians
-from lifter import Lifter  # Import the Lifter class
+from intake import Intake  # Import the Intake class
+from elevator import Elevator  # Import the Elevator class
 import wpilib
 import logging
 import math
-from wpimath.kinematics import ChassisSpeeds
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-MAX_SPEED_SCALING = 0.35
+MAX_SPEED_SCALING = 0.45
 DEAD_BAND = 0.1
 ELEVATOR_MOTOR_ID_1 = 20
-ELEVATOR_MOTOR_ID_2 = 16
+ELEVATOR_MOTOR_ID_2 = 14
 
 INTAKE_MOTOR_ID_TOP = 18
 INTAKE_MOTOR_ID_BOTTOM = 22
@@ -69,9 +69,9 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Initialize the elevator with motor IDs
-        self.elevator = Lifter(ELEVATOR_MOTOR_ID_1, ELEVATOR_MOTOR_ID_2)
+        self.elevator = Elevator(ELEVATOR_MOTOR_ID_1, ELEVATOR_MOTOR_ID_2)
         # Initialize the intake with motor IDs
-        self.intake = Lifter(INTAKE_MOTOR_ID_TOP, INTAKE_MOTOR_ID_BOTTOM)
+        self.intake = Intake(INTAKE_MOTOR_ID_TOP, INTAKE_MOTOR_ID_BOTTOM)
         
         # Setup telemetry
         self._registerTelemetry()
@@ -137,12 +137,12 @@ class RobotContainer:
         self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
         self._joystick.leftBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(-.3),
+            lambda: self.intake.load(),
             lambda: self.intake.stop()
         ))
         # Configure buttons for intake control
         self._joystick.rightBumper().whileTrue(commands2.cmd.startEnd(
-            lambda: self.intake.setMotor(-1),
+            lambda: self.intake.shoot(),
             lambda: self.intake.stop()
         ))
 
