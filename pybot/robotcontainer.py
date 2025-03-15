@@ -10,13 +10,14 @@ import commands2.cmd
 #from commands2.sysid import SysIdRoutine
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
-
+from wpimath.geometry import Pose2d # , Rotation2d
 from phoenix6 import swerve#, SignalLogger
 from wpimath.units import rotationsToRadians
 from lifter import Lifter  # Import the Lifter class
 import wpilib
 import logging
 import math
+from wpimath.kinematics import ChassisSpeeds
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -28,6 +29,7 @@ ELEVATOR_MOTOR_ID_2 = 16
 
 INTAKE_MOTOR_ID_TOP = 18
 INTAKE_MOTOR_ID_BOTTOM = 22
+DUMMY_POSE = Pose2d(2, 1, 1/2)
 
 class RobotContainer:
     """
@@ -74,6 +76,7 @@ class RobotContainer:
         # Setup telemetry
         self._registerTelemetry()
 
+
     def calculateJoystick(self) -> tuple[float, float]:
             x0, y0 = self._joystick.getLeftX(), self._joystick.getLeftY()
             magnitude = self.applyExponential(math.hypot(x0, y0), self._deadband, self._exponent) * self._max_speed
@@ -84,7 +87,7 @@ class RobotContainer:
 
             return x1, y1
     
-    def applyRequest(self) -> swerve.requests.SwerveRequest:
+    def defaultDriveRequest(self) -> swerve.requests.SwerveRequest:
             (new_vx, new_vy) = self.calculateJoystick()
 
             return (self._drive.with_velocity_x(self._driveMultiplier * new_vy # Drive left with negative X (left)
@@ -92,7 +95,14 @@ class RobotContainer:
             .with_rotational_rate(
                 self._driveMultiplier * self.applyExponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate
             ))  # Drive counterclockwise with negative X (left)
+    
+    def create_go_to_coordinate_request(self):        
+        return self.drivetrain.go_to_coordinate(DUMMY_POSE)
 
+    def create_point_at_coordinate_request(self):
+        return self.drivetrain.point_at_coordinate(DUMMY_POSE, self.calculateJoystick())
+
+    
 
     def configureButtonBindings(self) -> None:
         """
@@ -107,7 +117,7 @@ class RobotContainer:
         
         # Note that X is defined as forward according to WPILib convention,
         # and Y is defined as to the left according to WPILib convention.
-        self.drivetrain.setDefaultCommand(self.drivetrain.apply_request(self.applyRequest))
+        self.drivetrain.setDefaultCommand(self.drivetrain.apply_request(self.defaultDriveRequest))
         # reset the field-centric heading on x button press
         self._joystick.x().onTrue(
             self.drivetrain.runOnce(lambda: self.resetHeading())
@@ -136,6 +146,14 @@ class RobotContainer:
             lambda: self.intake.stop()
         ))
 
+        self._joystick.b().whileTrue(commands2.cmd.run(
+            lambda: self.create_point_at_coordinate_request(), self.drivetrain
+        ))
+
+        self._joystick.start().whileTrue(commands2.cmd.run(
+            lambda: self.create_go_to_coordinate_request(), self.drivetrain
+        ))
+
     def resetHeading(self) -> None:
         self.drivetrain.seed_field_centric()
 
@@ -146,15 +164,26 @@ class RobotContainer:
                                  selected,
                                  is_red_alliance = self.isRedAlliance())
     
-    def isRedAlliance(self) -> bool:
-        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
-    
     def _registerTelemetry (self) -> None:
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
         )
 
-    def applyExponential(self, input: float, deadband: float, exponent: float) -> float:
+
+    @staticmethod
+    def compute_heading_to_target(current_pose: Pose2d, target_pose: Pose2d) -> float:
+        relative_pose = current_pose.relativeTo(target_pose)
+        return math.atan2(relative_pose.Y(), relative_pose.X())
+
+
+    @staticmethod
+    def isRedAlliance() -> bool:
+        return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
+    
+    
+
+    @staticmethod
+    def applyExponential(input: float, deadband: float, exponent: float) -> float:
         """
         Apply an exponential response curve with a deadband on the input
         such that the final output goes smoothly from 0 -> ±1 without

@@ -327,6 +327,8 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         :type vision_measurement_std_devs:  tuple[float, float, float] | None
         """
         swerve.SwerveDrivetrain.add_vision_measurement(self, vision_robot_pose, utils.fpga_to_current_time(timestamp), vision_measurement_std_devs)
+    
+
     def get_pose(self) -> Pose2d:
         """
         Gets the current pose of the robot.
@@ -335,6 +337,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         :rtype: Pose2d
         """
         return super().get_state().pose
+    
     def follow_trajectory(self, sample):
         # Enable continuous input for heading controller
         self.heading_controller.enableContinuousInput(-math.pi, math.pi)
@@ -359,6 +362,47 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
 
         self.set_control(request)
 
+    def go_to_coordinate(self, target_pose: Pose2d):
+        # Enable continuous input for heading controller
+        self.heading_controller.enableContinuousInput(-math.pi, math.pi)
+
+        # Get current pose from swerve state
+        current_pose = self.get_pose()
+
+        # Calculate the necessary speeds using PID controllers
+        vx = self.x_controller.calculate(current_pose.X(), target_pose.X())
+        vy = self.y_controller.calculate(current_pose.Y(), target_pose.Y())
+        omega = self.heading_controller.calculate(current_pose.rotation().radians(), target_pose.rotation().radians())
+
+        speeds = ChassisSpeeds(vx, vy, omega)
+
+        # Create field-centric request with proper enum references
+        request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
+            .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
+            .with_desaturate_wheel_speeds(True)
+
+        self.set_control(request)
+    
+    def point_at_coordinate(self, target_pose: Pose2d, joyvalues: tuple[float, float]):
+        forward, strafe = joyvalues[1], joyvalues[0]
+        current_pose = self.get_pose()
+
+        heading_to_target = self.compute_heading_to_target(current_pose, target_pose)
+        current_heading = current_pose.rotation().radians()
+
+        self.heading_controller.setSetpoint(heading_to_target)
+        turn_command = self.heading_controller.calculate(current_heading)
+
+        request = (
+            swerve.requests.ApplyFieldSpeeds()
+            .with_speeds(ChassisSpeeds(forward, strafe, turn_command))
+            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY)
+            .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION)
+            .with_desaturate_wheel_speeds(True)
+        )
+        self.set_control(request)
+
     def stop(self):
         """
         Stops the swerve drivetrain by setting all speeds to zero.
@@ -369,3 +413,8 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True)
         self.set_control(request)
+
+    @staticmethod
+    def compute_heading_to_target(current_pose: Pose2d, target_pose: Pose2d) -> float:
+        relative_pose = current_pose.relativeTo(target_pose)
+        return math.atan2(relative_pose.Y(), relative_pose.X())
