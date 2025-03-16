@@ -43,6 +43,7 @@ class FollowTrajectory(commands2.Command):
             self.event_markers = self.trajectory.events
 
         # Reset and start the timer when the autonomous period begins
+        self.finished = False
         self.timer.restart()
 
     def execute(self) -> None:
@@ -67,7 +68,7 @@ class FollowTrajectory(commands2.Command):
                                 self.triggered_events.add(marker.event)
 
                 else:
-                    self.drivetrain.stop()
+                    self.finished = True
 
     def triggerEvent(self, event) -> None:
         """
@@ -87,6 +88,9 @@ class FollowTrajectory(commands2.Command):
         """
         Returns true when the command should end.
         """
+        if self.finished:
+            self.drivetrain.stop()
+            return True
         return False
 
 def createChooser() -> wpilib.SendableChooser:

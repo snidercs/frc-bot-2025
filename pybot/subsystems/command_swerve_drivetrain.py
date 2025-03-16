@@ -377,7 +377,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         speeds = ChassisSpeeds(vx, vy, omega)
 
         # Create field-centric request with proper enum references
-        request = swerve.requests.ApplyFieldSpeeds().with_speeds(speeds) \
+        request = swerve.requests.ApplyRobotSpeeds().with_speeds(speeds) \
             .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY) \
             .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION) \
             .with_desaturate_wheel_speeds(True)
@@ -385,23 +385,25 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         self.set_control(request)
     
     def point_at_coordinate(self, target_pose: Pose2d, joyvalues: tuple[float, float]):
-        forward, strafe = joyvalues[1], joyvalues[0]
-        current_pose = self.get_pose()
+        if target_pose:
 
-        heading_to_target = self.compute_heading_to_target(current_pose, target_pose)
-        current_heading = current_pose.rotation().radians()
+            forward, strafe = joyvalues[1], joyvalues[0]
+            current_pose = self.get_pose()
 
-        self.heading_controller.setSetpoint(heading_to_target)
-        turn_command = self.heading_controller.calculate(current_heading)
+            heading_to_target = self.computeHeadingToTarget(current_pose, target_pose)
+            current_heading = current_pose.rotation().radians()
 
-        request = (
-            swerve.requests.ApplyFieldSpeeds()
-            .with_speeds(ChassisSpeeds(forward, strafe, turn_command))
-            .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY)
-            .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION)
-            .with_desaturate_wheel_speeds(True)
-        )
-        self.set_control(request)
+            self.heading_controller.setSetpoint(heading_to_target)
+            turn_command = self.heading_controller.calculate(current_heading)
+
+            request = (
+                swerve.requests.ApplyFieldSpeeds()
+                .with_speeds(ChassisSpeeds(forward, strafe, turn_command))
+                .with_drive_request_type(swerve.swerve_module.SwerveModule.DriveRequestType.VELOCITY)
+                .with_steer_request_type(swerve.swerve_module.SwerveModule.SteerRequestType.POSITION)
+                .with_desaturate_wheel_speeds(True)
+            )
+            self.set_control(request)
 
     def stop(self):
         """
@@ -415,6 +417,6 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         self.set_control(request)
 
     @staticmethod
-    def compute_heading_to_target(current_pose: Pose2d, target_pose: Pose2d) -> float:
+    def computeHeadingToTarget(current_pose: Pose2d, target_pose: Pose2d) -> float:
         relative_pose = current_pose.relativeTo(target_pose)
         return math.atan2(relative_pose.Y(), relative_pose.X())

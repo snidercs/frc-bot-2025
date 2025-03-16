@@ -18,6 +18,9 @@ from elevator import Elevator  # Import the Elevator class
 import wpilib
 import logging
 import math
+from limelighthelper import LimelightHelper
+from typing import Optional, List
+import time  # Import time module
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -61,8 +64,6 @@ class RobotContainer:
                 swerve.SwerveModule.DriveRequestType.VELOCITY
             )
         )
-        self._brake = swerve.requests.SwerveDriveBrake()
-        self._point = swerve.requests.PointWheelsAt()
 
         self._logger = Telemetry(self._max_speed)
 
@@ -72,9 +73,15 @@ class RobotContainer:
         self.elevator = Elevator(ELEVATOR_MOTOR_ID_1, ELEVATOR_MOTOR_ID_2)
         # Initialize the intake with motor IDs
         self.intake = Intake(INTAKE_MOTOR_ID_TOP, INTAKE_MOTOR_ID_BOTTOM)
+
+        self.limelighthelper = LimelightHelper()
         
         # Setup telemetry
         self._registerTelemetry()
+
+        self.last_valid_pose = None  # Cache for the last valid pose
+        self.last_pose_timestamp = 0.0  # Cache for the last timestamp
+        self.last_limelight_pose = None  # Cache for the last valid Limelight pose
 
 
     def calculateJoystick(self) -> tuple[float, float]:
@@ -89,6 +96,7 @@ class RobotContainer:
     
     def defaultDriveRequest(self) -> swerve.requests.SwerveRequest:
             (new_vx, new_vy) = self.calculateJoystick()
+            self.updateVisionMeasurements()
 
             return (self._drive.with_velocity_x(self._driveMultiplier * new_vy # Drive left with negative X (left)
             )  .with_velocity_y(self._driveMultiplier * new_vx) # Drive forward with negative Y (forward)
@@ -96,13 +104,37 @@ class RobotContainer:
                 self._driveMultiplier * self.applyExponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate
             ))  # Drive counterclockwise with negative X (left)
     
-    def create_go_to_coordinate_request(self):        
-        return self.drivetrain.go_to_coordinate(DUMMY_POSE)
+    def createGoToCoordinateRequest(self) -> Optional[swerve.requests.SwerveRequest]:
+        """
+        Create a request to go to the coordinate reported by limelight1.
+        """
+        limelight1 = self.limelighthelper.limelight1
+        if limelight1:
+            pose = self.limelighthelper.get_target_pose(limelight1)
+            logging.info(f"GoToCoordinateRequest: Target Pose from Limelight1: {pose}")
+            return self.drivetrain.go_to_coordinate(pose)
+        else:
+            return self.drivetrain.stop()
 
-    def create_point_at_coordinate_request(self):
-        return self.drivetrain.point_at_coordinate(DUMMY_POSE, self.calculateJoystick())
+    def createPointAtCoordinateRequest(self) -> Optional[swerve.requests.SwerveRequest]:
+        """
+        Create a request to point at the coordinate reported by limelight1.
+        If no new target pose is available, use the last valid Limelight pose.
+        """
+        limelight1 = self.limelighthelper.limelight1
+        if limelight1:
+            pose = self.limelighthelper.get_target_pose(limelight1)
+            if pose:
+                # Cache the Limelight pose
+                self.last_limelight_pose = pose
+                logging.info(f"PointAtCoordinateRequest: Target Pose from Limelight1: {pose}")
+                return self.drivetrain.point_at_coordinate(pose, self.calculateJoystick())
+            elif self.last_limelight_pose:
+                # Use the cached Limelight pose if no new pose is available
+                logging.warning("No new target pose from Limelight. Using last cached Limelight pose.")
+                return self.drivetrain.point_at_coordinate(self.last_limelight_pose, self.calculateJoystick())
 
-    
+        return self.drivetrain.stop()
 
     def configureButtonBindings(self) -> None:
         """
@@ -147,11 +179,11 @@ class RobotContainer:
         ))
 
         self._joystick.b().whileTrue(commands2.cmd.run(
-            lambda: self.create_point_at_coordinate_request(), self.drivetrain
+            lambda: self.createPointAtCoordinateRequest(), self.drivetrain
         ))
 
         self._joystick.start().whileTrue(commands2.cmd.run(
-            lambda: self.create_go_to_coordinate_request(), self.drivetrain
+            lambda: self.createGoToCoordinateRequest(), self.drivetrain
         ))
 
     def resetHeading(self) -> None:
@@ -169,19 +201,28 @@ class RobotContainer:
             lambda state: self._logger.telemeterize(state)
         )
 
-
-    @staticmethod
-    def compute_heading_to_target(current_pose: Pose2d, target_pose: Pose2d) -> float:
-        relative_pose = current_pose.relativeTo(target_pose)
-        return math.atan2(relative_pose.Y(), relative_pose.X())
-
+    def updateVisionMeasurements(self) -> None:
+        """
+        Periodically update the drivetrain's odometry using vision measurements.
+        """
+        limelight1 = self.limelighthelper.limelight1
+        if limelight1:
+            # Get the current pose from the Limelight
+            pose = self.limelighthelper.get_robot_pose(limelight1)
+            if pose:
+                # Cache the pose and timestamp
+                self.last_valid_pose = pose
+                self.last_pose_timestamp = time.time()
+                # Add the vision measurement to the drivetrain
+                self.drivetrain.add_vision_measurement(
+                    vision_robot_pose=pose,
+                    timestamp=self.last_pose_timestamp
+                )
 
     @staticmethod
     def isRedAlliance() -> bool:
         return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
     
-    
-
     @staticmethod
     def applyExponential(input: float, deadband: float, exponent: float) -> float:
         """
