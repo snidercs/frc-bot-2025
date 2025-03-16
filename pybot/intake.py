@@ -10,8 +10,12 @@ class Intake(DualMotor):
 
     def shoot(self):
         """Shoots the coral."""
-        self.setMotor(SHOOTING_POWER)
+        self.motor.set(SHOOTING_POWER)
     
     def load(self):
         """Loads the coral."""  
-        self.setMotor(LOADING_POWER)
+        self.motor.set(LOADING_POWER)
+
+    def stop(self):
+        """Stops the motor."""
+        self.motor.stopMotor()

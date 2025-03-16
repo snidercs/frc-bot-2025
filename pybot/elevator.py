@@ -1,42 +1,48 @@
 from dualmotor import DualMotor
-from phoenix6.controls import DutyCycleOut# , NeutralOut
-from phoenix6.configs import TalonFXConfiguration
+from phoenix6.controls import DutyCycleOut#, NeutralOut
 
-HOLDING_POWER = 0.02
-GOING_UP_POWER = 0.7
-GOING_DOWN_POWER = -0.5
+HOLDING_POWER = 0.02  # Holding power to prevent the elevator from falling
+GOING_UP_POWER = 0.7  # Power to move up
+GOING_DOWN_POWER = -0.5  # Power to move down
+STALL_CURRENT_THRESHOLD_UP = .18  # Amperage threshold for stall detection
+STALL_CURRENT_THRESHOLD_DOWN = .9  # Amperage threshold for stall detection
 
 class Elevator(DualMotor):
     def __init__(self, motor1_id, motor2_id):
         super().__init__(motor1_id, motor2_id)
-        # Additional initialization for the elevator can go here
-
-        # I want to have it torque out at mins and max's, not sure if I'm doing this right here though lol
-
-        # Configure current limits
-        #motor_config = TalonFXConfiguration()
-        #motor_config.SupplyCurrentLimit = 70  # Default limit of 70 A
-        #motor_config.SupplyCurrentLowerLimit = 40  # Reduce to 40 A if at 70 A for 1 second
-        #motor_config.SupplyCurrentLowerTime = 1  # Time in seconds
-        #motor_config.SupplyCurrentLimitEnable = True  # Enable supply current limiting
-        
-        #motor_config.StatorCurrentLimit = 120  # Limit stator to 120 A
-        #motor_config.StatorCurrentLimitEnable = True  # Enable stator current limiting
-        
-        # Apply configuration to both motors
-        #self.motor.configurator = motor_config
-        #self.follower.configurator = motor_config
 
     def move_to_position(self, position):
-        # Implement logic to move the elevator to a specific position. Not sure on the units yet
+        # No encoders, so this method is unused for now
         pass
 
     def moveUp(self) -> None:
-        self.setMotor(GOING_UP_POWER)
+        while not self.check_stall(True):
+            self.motor.set(GOING_UP_POWER)
 
     def moveDown(self) -> None:
-        self.setMotor(GOING_DOWN_POWER)
+        while not self.check_stall(False):
+            self.motor.set(GOING_DOWN_POWER)
 
     def stop(self) -> None:
-        self.motor.stopMotor()
-        self.motor.set_control(DutyCycleOut(HOLDING_POWER))
+        """Stops the motor and applies holding power to prevent gravity drop."""
+        self.motor.set_control(DutyCycleOut(HOLDING_POWER))  
+
+    def check_stall(self, going_up: bool) -> bool:
+        """Detects if the elevator is stalled by checking current draw."""
+        current = self.motor.get_supply_current().value_as_double  # Get motor current draw
+        print(f"Current supply current: {current}")
+        
+        if going_up:
+
+            if current >= STALL_CURRENT_THRESHOLD_UP:
+                print(f"Stall detected GOING UP! Stopping motor. stall current: {current}")
+                self.stop()
+                return True  # Stall detected, stop moving
+            
+        else:
+            if current <= STALL_CURRENT_THRESHOLD_DOWN:
+                print(f"Stall detected GOING DOWN! Stopping motor. stall current: {current}")
+                self.stop()
+                return True  # Stall detected, stop moving
+
+        return False  # No stall, keep moving

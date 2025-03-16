@@ -11,10 +11,3 @@ class DualMotor:
         self.motor.setNeutralMode(NeutralModeValue.BRAKE)
         self.follower.setNeutralMode(NeutralModeValue.BRAKE)
         self.follower.set_control(Follower(master_id, True))
-
-
-    def stop(self) -> None:
-        self.motor.stopMotor()
-        
-    def setMotor(self, value) -> None:
-        self.motor.set(value)
