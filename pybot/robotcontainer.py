@@ -124,17 +124,17 @@ class RobotContainer:
         )
 
         # Configure buttons for elevator control
-        self._joystick.y().whileTrue(commands2.cmd.startEnd(
-            lambda: self.elevator.moveUp(),
-            lambda: self.elevator.stop()
-        ))
+        #self._joystick.y().whileTrue(commands2.cmd.startEnd(
+        #    lambda: self.elevator.moveUp(),
+        #    lambda: self.elevator.stop()
+        #))
 
-        self._joystick.a().whileTrue(commands2.cmd.startEnd(
-            lambda: self.elevator.moveDown(),
-            lambda: self.elevator.stop()
-        ))
+        #self._joystick.a().whileTrue(commands2.cmd.startEnd(
+        #    lambda: self.elevator.moveDown(),
+        #    lambda: self.elevator.stop()
+        #))
 
-        self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
+        #self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
         self._joystick.leftBumper().whileTrue(commands2.cmd.startEnd(
             lambda: self.intake.load(),
@@ -146,9 +146,9 @@ class RobotContainer:
             lambda: self.intake.stop()
         ))
 
-        self._joystick.b().whileTrue(commands2.cmd.run(
-            lambda: self.create_point_at_coordinate_request(), self.drivetrain
-        ))
+        #self._joystick.b().whileTrue(commands2.cmd.run(
+        #    lambda: self.create_point_at_coordinate_request(), self.drivetrain
+        #))
 
         #self._joystick.start().whileTrue(commands2.cmd.run(
         #    lambda: self.create_go_to_coordinate_request(), self.drivetrain
