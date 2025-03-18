@@ -22,8 +22,8 @@ import math
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-MAX_SPEED_SCALING = 0.45
-DEAD_BAND = 0.1
+MAX_SPEED_SCALING = 0.55
+DEAD_BAND = 0.03
 ELEVATOR_MOTOR_ID_1 = 20
 ELEVATOR_MOTOR_ID_2 = 14
 
@@ -49,7 +49,7 @@ class RobotContainer:
 
         # Setting up bindings for necessary control of the swerve drive platform
         self._deadband = DEAD_BAND # The input deadband
-        self._exponent = 3.0 # Exponential factor (try 2, 2.5, or 3)
+        self._exponent = 4.0 # Exponential factor (try 2, 2.5, or 3)
 
         self._drive = (
             swerve.requests.FieldCentric()
@@ -124,17 +124,17 @@ class RobotContainer:
         )
 
         # Configure buttons for elevator control
-        #self._joystick.y().whileTrue(commands2.cmd.startEnd(
-        #    lambda: self.elevator.moveUp(),
-        #    lambda: self.elevator.stop()
-        #))
+        self._joystick.y().whileTrue(commands2.cmd.startEnd(
+            lambda: self.elevator.moveUp(),
+            lambda: self.elevator.stop()
+        ))
 
-        #self._joystick.a().whileTrue(commands2.cmd.startEnd(
-        #    lambda: self.elevator.moveDown(),
-        #    lambda: self.elevator.stop()
-        #))
+        self._joystick.a().whileTrue(commands2.cmd.startEnd(
+            lambda: self.elevator.moveDown(),
+            lambda: self.elevator.stop()
+        ))
 
-        #self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
+        self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
         self._joystick.leftBumper().whileTrue(commands2.cmd.startEnd(
             lambda: self.intake.load(),
@@ -146,9 +146,9 @@ class RobotContainer:
             lambda: self.intake.stop()
         ))
 
-        #self._joystick.b().whileTrue(commands2.cmd.run(
-        #    lambda: self.create_point_at_coordinate_request(), self.drivetrain
-        #))
+        self._joystick.b().whileTrue(commands2.cmd.run(
+            lambda: self.create_point_at_coordinate_request(), self.drivetrain
+        ))
 
         #self._joystick.start().whileTrue(commands2.cmd.run(
         #    lambda: self.create_go_to_coordinate_request(), self.drivetrain

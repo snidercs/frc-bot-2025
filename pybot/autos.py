@@ -76,10 +76,10 @@ class FollowTrajectory(commands2.Command):
         # Implement the actions to be triggered by the event
         if event == "CoralPlace":
             # Perform some action
-            self.intake.setMotor(1)
+            self.intake.shoot()
         elif event == "CoralIntake":
             # Perform another action
-            self.intake.setMotor(0.3)
+            self.intake.load()
         elif event == "ResetHeading":
             self.drivetrain.seed_field_centric()
 

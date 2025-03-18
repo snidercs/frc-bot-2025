@@ -1,6 +1,6 @@
 from dualmotor import DualMotor
 
-SHOOTING_POWER = -.4
+SHOOTING_POWER = -.30
 LOADING_POWER = -.15
 
 
