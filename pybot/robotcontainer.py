@@ -124,17 +124,17 @@ class RobotContainer:
         )
 
         # Configure buttons for elevator control
-        #self._joystick.y().whileTrue(commands2.cmd.startEnd(
-        #    lambda: self.elevator.moveUp(),
-        #    lambda: self.elevator.stop()
-        #))
+        self._joystick.y().whileTrue(commands2.cmd.startEnd(
+            lambda: self.elevator.moveUp(),
+            lambda: self.elevator.stop()
+        ))
 
-        #self._joystick.a().whileTrue(commands2.cmd.startEnd(
-        #    lambda: self.elevator.moveDown(),
-        #    lambda: self.elevator.stop()
-        #))
+        self._joystick.a().whileTrue(commands2.cmd.startEnd(
+            lambda: self.elevator.moveDown(),
+            lambda: self.elevator.stop()
+        ))
 
-        #self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
+        self._joystick.rightTrigger().onTrue(commands2.cmd.runOnce(self.elevator.stop, self.elevator))
 
         self._joystick.leftBumper().whileTrue(commands2.cmd.startEnd(
             lambda: self.intake.load(),
@@ -161,8 +161,7 @@ class RobotContainer:
         from autos import FollowTrajectory
         return FollowTrajectory (self.drivetrain,
                                  self.intake,
-                                 selected,
-                                 is_red_alliance = self.isRedAlliance())
+                                 selected)
     
     def _registerTelemetry (self) -> None:
         self.drivetrain.register_telemetry(

@@ -3,10 +3,10 @@ import commands2
 import wpilib
 import choreo
 
-DEFAULT_TRAJECTORY = 'outwayred'
+DEFAULT_TRAJECTORY = 'redscore'
 
 class FollowTrajectory(commands2.Command):
-    def __init__(self, drivetrain, intake, traj, is_red_alliance) -> None:
+    def __init__(self, drivetrain, intake, traj) -> None:
         """
         Initializes the AutonomousCommand.
 
@@ -19,7 +19,6 @@ class FollowTrajectory(commands2.Command):
         self.intake = intake
         self.trajectory = choreo.load_swerve_trajectory(traj)
         self.timer = wpilib.Timer()
-        self.is_red_alliance = is_red_alliance
         self.laststamp = 0
         self.event_markers = []
         self.triggered_events = set()
@@ -33,7 +32,7 @@ class FollowTrajectory(commands2.Command):
         """
         if self.trajectory:
             # Get the initial pose of the trajectory
-            initial_pose = self.trajectory.get_initial_pose(self.is_red_alliance)
+            initial_pose = self.trajectory.get_initial_pose()
 
             if initial_pose:
                 # Reset odometry to the start of the trajectory
@@ -51,35 +50,35 @@ class FollowTrajectory(commands2.Command):
         """
         if self.trajectory:
             # Sample the trajectory at the current time into the autonomous period
-            sample = self.trajectory.sample_at(self.timer.get(), self.is_red_alliance)
+            sample = self.trajectory.sample_at(self.timer.get())
 
             if sample:
-                if sample.timestamp != self.laststamp:
-                    # Command the drivetrain to follow the sampled trajectory
-                    self.drivetrain.follow_trajectory(sample)
-                    self.laststamp = sample.timestamp
+                #if sample.timestamp != self.laststamp:
+                # Command the drivetrain to follow the sampled trajectory
+                self.drivetrain.follow_trajectory(sample)
+                self.laststamp = sample.timestamp
 
-                    # Check for event markers and trigger actions
-                    for marker in self.event_markers:
-                        if marker.timestamp <= self.timer.get() < marker.timestamp + 0.2:
-                            if marker.event not in self.triggered_events:
-                                self.triggerEvent(marker.event)
-                                self.triggered_events.add(marker.event)
+                # Check for event markers and trigger actions
+                for marker in self.event_markers:
+                    if marker.timestamp <= self.timer.get() < marker.timestamp + 0.2:
+                        if marker.event not in self.triggered_events:
+                            self.triggerEvent(marker.event)
+                            self.triggered_events.add(marker.event)
 
-                else:
-                    self.drivetrain.stop()
+                #else:
+                    #self.drivetrain.stop()
 
     def triggerEvent(self, event) -> None:
         """
         Trigger the action associated with the event.
         """
-        # Implement the actions to be triggered by the event
+
         if event == "CoralPlace":
-            # Perform some action
             self.intake.shoot()
         elif event == "CoralIntake":
-            # Perform another action
             self.intake.load()
+        elif event == "CoralStop":
+            self.intake.stop()
         elif event == "ResetHeading":
             self.drivetrain.seed_field_centric()
 
