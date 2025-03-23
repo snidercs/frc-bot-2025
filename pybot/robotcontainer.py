@@ -70,12 +70,12 @@ class RobotContainer:
         )
         self._brake = swerve.requests.SwerveDriveBrake()
         self._point = swerve.requests.PointWheelsAt()
-        self.slowmo = True
+        self.slowmo = False
 
         self._logger = Telemetry(self._max_speed)
 
         self.drivetrain = TunerConstants.create_drivetrain()
-        self.current_speed = MAX_SPEED_SCALING
+        self.current_drive_speed = MAX_SPEED_SCALING
         self.current_rot_speed = MAX_SPEED_ROT
 
         # Initialize the elevator with motor IDs
@@ -89,7 +89,7 @@ class RobotContainer:
 
     def calculateJoystick(self) -> tuple[float, float]:
             x0, y0 = self._joystick.getLeftX(), self._joystick.getLeftY()
-            magnitude = self.applyExponential(math.hypot(x0, y0), self._deadband, self._exponent) * self._max_speed * self.current_speed
+            magnitude = self.applyExponential(math.hypot(x0, y0), self._deadband, self._exponent) * self._max_speed * self.current_drive_speed
             theta = math.atan2(y0, x0)
 
             x1 = magnitude * math.cos(theta)
@@ -103,7 +103,7 @@ class RobotContainer:
             return (self._drive.with_velocity_x(self._driveMultiplier * new_vy # Drive left with negative X (left)
             )  .with_velocity_y(self._driveMultiplier * new_vx) # Drive forward with negative Y (forward)
             .with_rotational_rate(
-                self._driveMultiplier * self.applyExponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate * self.current_rot_speed
+                self._rotMultiplier * self.applyExponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate * self.current_rot_speed
             ))  # Drive counterclockwise with negative X (left)
     
     def create_go_to_coordinate_request(self):        
@@ -111,8 +111,6 @@ class RobotContainer:
 
     def create_point_at_coordinate_request(self):
         return self.drivetrain.point_at_coordinate(DUMMY_POSE, self.calculateJoystick())
-
-    
 
     def configureButtonBindings(self) -> None:
         """
@@ -124,6 +122,7 @@ class RobotContainer:
         
         # Cache the multiplier
         self._driveMultiplier = -1.0 if self.isRedAlliance() else 1.0
+        self._rotMultiplier = -1.0
         
         # Note that X is defined as forward according to WPILib convention,
         # and Y is defined as to the left according to WPILib convention.
@@ -163,16 +162,14 @@ class RobotContainer:
         #))
 
     def gear_switch(self):
-        if self.slowmo:
-            self.current_speed = SLOWMO_SPEED_SCALING
+        if not self.slowmo:
+            self.current_drive_speed = SLOWMO_SPEED_SCALING
             self.current_rot_speed = SLOWMO_SPEED_ROT
-            self.slowmo = False
-        else:
-            self.current_speed = MAX_SPEED_SCALING
-            self.current_rot_speed = MAX_SPEED_ROT
             self.slowmo = True
-    
-
+        else:
+            self.current_drive_speed = MAX_SPEED_SCALING
+            self.current_rot_speed = MAX_SPEED_ROT
+            self.slowmo = False
 
     def resetHeading(self) -> None:
         self.drivetrain.seed_field_centric()
@@ -188,18 +185,14 @@ class RobotContainer:
             lambda state: self._logger.telemeterize(state)
         )
 
-
     @staticmethod
     def compute_heading_to_target(current_pose: Pose2d, target_pose: Pose2d) -> float:
         relative_pose = current_pose.relativeTo(target_pose)
         return math.atan2(relative_pose.Y(), relative_pose.X())
 
-
     @staticmethod
     def isRedAlliance() -> bool:
         return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kRed
-    
-    
 
     @staticmethod
     def applyExponential(input: float, deadband: float, exponent: float) -> float:
