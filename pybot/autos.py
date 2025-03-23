@@ -3,7 +3,7 @@ import commands2
 import wpilib
 import choreo
 
-DEFAULT_TRAJECTORY = 'redscore'
+DEFAULT_TRAJECTORY = 'leftscore'
 
 class FollowTrajectory(commands2.Command):
     def __init__(self, drivetrain, intake, traj) -> None:
@@ -32,7 +32,7 @@ class FollowTrajectory(commands2.Command):
         """
         if self.trajectory:
             # Get the initial pose of the trajectory
-            initial_pose = self.trajectory.get_initial_pose()
+            initial_pose = self.trajectory.get_initial_pose(True)
 
             if initial_pose:
                 # Reset odometry to the start of the trajectory
@@ -50,7 +50,7 @@ class FollowTrajectory(commands2.Command):
         """
         if self.trajectory:
             # Sample the trajectory at the current time into the autonomous period
-            sample = self.trajectory.sample_at(self.timer.get())
+            sample = self.trajectory.sample_at(self.timer.get(), True)
 
             if sample:
                 #if sample.timestamp != self.laststamp:

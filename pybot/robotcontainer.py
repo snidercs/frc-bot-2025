@@ -22,7 +22,14 @@ import math
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
+
 MAX_SPEED_SCALING = 0.55
+CURRENT_SPEED_SCALING = MAX_SPEED_SCALING
+SLOWMO_SPEED_SCALING = .1
+
+MAX_SPEED_ROT = .1
+SLOWMO_SPEED_ROT = .03
+
 DEAD_BAND = 0.03
 ELEVATOR_MOTOR_ID_1 = 20
 ELEVATOR_MOTOR_ID_2 = 14
@@ -41,10 +48,10 @@ class RobotContainer:
 
     def __init__(self) -> None:
         self._max_speed = (
-            TunerConstants.speed_at_12_volts * MAX_SPEED_SCALING
+            TunerConstants.speed_at_12_volts
         )  # speed_at_12_volts desired top speed
         self._max_angular_rate = rotationsToRadians(
-            TunerConstants.angular_at_12_volts * .1
+            TunerConstants.angular_at_12_volts
         )
 
         # Setting up bindings for necessary control of the swerve drive platform
@@ -63,10 +70,13 @@ class RobotContainer:
         )
         self._brake = swerve.requests.SwerveDriveBrake()
         self._point = swerve.requests.PointWheelsAt()
+        self.slowmo = True
 
         self._logger = Telemetry(self._max_speed)
 
         self.drivetrain = TunerConstants.create_drivetrain()
+        self.current_speed = MAX_SPEED_SCALING
+        self.current_rot_speed = MAX_SPEED_ROT
 
         # Initialize the elevator with motor IDs
         self.elevator = Elevator(ELEVATOR_MOTOR_ID_1, ELEVATOR_MOTOR_ID_2)
@@ -79,7 +89,7 @@ class RobotContainer:
 
     def calculateJoystick(self) -> tuple[float, float]:
             x0, y0 = self._joystick.getLeftX(), self._joystick.getLeftY()
-            magnitude = self.applyExponential(math.hypot(x0, y0), self._deadband, self._exponent) * self._max_speed
+            magnitude = self.applyExponential(math.hypot(x0, y0), self._deadband, self._exponent) * self._max_speed * self.current_speed
             theta = math.atan2(y0, x0)
 
             x1 = magnitude * math.cos(theta)
@@ -93,7 +103,7 @@ class RobotContainer:
             return (self._drive.with_velocity_x(self._driveMultiplier * new_vy # Drive left with negative X (left)
             )  .with_velocity_y(self._driveMultiplier * new_vx) # Drive forward with negative Y (forward)
             .with_rotational_rate(
-                self._driveMultiplier * self.applyExponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate
+                self._driveMultiplier * self.applyExponential(self._joystick.getRightX(), self._deadband, self._exponent) * self._max_angular_rate * self.current_rot_speed
             ))  # Drive counterclockwise with negative X (left)
     
     def create_go_to_coordinate_request(self):        
@@ -146,13 +156,23 @@ class RobotContainer:
             lambda: self.intake.stop()
         ))
 
-        #self._joystick.b().whileTrue(commands2.cmd.run(
-        #    lambda: self.create_point_at_coordinate_request(), self.drivetrain
-        #))
+        self._joystick.b().onTrue(commands2.cmd.runOnce(lambda: self.gear_switch()))
 
         #self._joystick.start().whileTrue(commands2.cmd.run(
         #    lambda: self.create_go_to_coordinate_request(), self.drivetrain
         #))
+
+    def gear_switch(self):
+        if self.slowmo:
+            self.current_speed = SLOWMO_SPEED_SCALING
+            self.current_rot_speed = SLOWMO_SPEED_ROT
+            self.slowmo = False
+        else:
+            self.current_speed = MAX_SPEED_SCALING
+            self.current_rot_speed = MAX_SPEED_ROT
+            self.slowmo = True
+    
+
 
     def resetHeading(self) -> None:
         self.drivetrain.seed_field_centric()
