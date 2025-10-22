@@ -121,7 +121,7 @@ class RobotContainer:
 
         
         # Cache the multiplier
-        self._driveMultiplier = -1.0 if self.isRedAlliance() else 1.0
+        self._driveMultiplier = 1.0 if self.isRedAlliance() else -1.0
         self._rotMultiplier = -1.0
         
         # Note that X is defined as forward according to WPILib convention,
